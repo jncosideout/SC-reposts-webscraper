@@ -73,10 +73,12 @@ def getReposts(driver: webdriver):
     condition = True
     while condition:
         pag.press('pagedown')
-        time.sleep(2)
+        time.sleep(1)
         # WebDriverWait(driver, 10).until(
-        pagingEOF = EC.visibility_of_element_located(
-            driver.find_element(By.CSS_SELECTOR, css_selector)            
+        pagingEOF = EC.visibility_of_all_elements_located(
+            EC.visibility_of(
+                driver.find_element(By.CSS_SELECTOR, css_selector)            
+            )
         )
         if pagingEOF != None:
             condition = False
