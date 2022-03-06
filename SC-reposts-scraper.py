@@ -8,6 +8,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.common.exceptions import TimeoutException
 import time
 import os
 import pyautogui as pag
@@ -54,7 +55,7 @@ def extract(url: str):
     viewPort = driver.find_element(By.TAG_NAME, "body")
 
     try:
-        getReposts(driver)
+        scrollReposts(driver)
 
         # Make a copy of relevant data, because Selenium will throw if
         # you try to access the properties after the driver quit
@@ -66,22 +67,24 @@ def extract(url: str):
         
     return elem
 
-def getReposts(driver: webdriver):
+def scrollReposts(driver: webdriver):
     # delimiter of reposts page, signals bottom of reposts list
     css_selector = ".paging-eof"
     # <div class="paging-eof sc-border-light-top" title=""></div>
     condition = True
     while condition:
         pag.press('pagedown')
-        time.sleep(1)
-        # WebDriverWait(driver, 10).until(
-        pagingEOF = EC.visibility_of_all_elements_located(
-            EC.visibility_of(
-                driver.find_element(By.CSS_SELECTOR, css_selector)            
+        try:
+            WebDriverWait(driver, 1).until(
+                EC.visibility_of_element_located(
+                    (By.CSS_SELECTOR, css_selector)            
+                )
             )
-        )
-        if pagingEOF != None:
+        except TimeoutException:
+            condition = True
+        else:
             condition = False
+
 
 def transform(elem):
     return elem["text"]
