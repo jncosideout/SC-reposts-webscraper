@@ -1,3 +1,4 @@
 pyautogui
 selenium
 bs4
+requests

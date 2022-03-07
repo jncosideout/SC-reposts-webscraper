@@ -10,11 +10,14 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
 import time
-import os
 import pyautogui as pag
-import math
 from collections import namedtuple
 from typing import NamedTuple
+from os import path as Path
+from pathlib import PurePath
+from bs4 import BeautifulSoup
+import requests
+import sys
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
@@ -51,20 +54,20 @@ def extract(url: str):
     pag.press('F11')
 
     pag.moveTo(windowSize['width']/2,windowSize['height']/2)
-    global viewPort
-    viewPort = driver.find_element(By.TAG_NAME, "body")
 
     try:
         scrollReposts(driver)
-
         # Make a copy of relevant data, because Selenium will throw if
         # you try to access the properties after the driver quit
-        elem = {
-            "text": ""
-        }
+        path = download(url, '.')
     finally:
         driver.close()
         
+    songs = run(path)
+
+    for song in songs:
+        elem = elem + song + '\n'
+
     return elem
 
 def scrollReposts(driver: webdriver):
@@ -85,9 +88,50 @@ def scrollReposts(driver: webdriver):
         else:
             condition = False
 
+def download(url, dir):
+    file_name = PurePath(url).name
+    file_path = Path.join(dir, file_name)
+    text = ''
+    
+    try:
+        response = requests.get(url)
+        if response.ok:
+            text = response.text
+        else:
+            print('Bad response for', url, response.status_code)
+    except requests.exceptions.ConnectionError as exc:
+        print(exc)
+        
+    with open(file_path, 'w') as fh:
+        fh.write(text)
+    
+    # debug
+    print("downloaded html:")
+    print(text)
+    return(file_path)
+    
+def parse_html(path):
+    with open(path, 'r') as fh:
+        content = fh.read()
 
-def transform(elem):
-    return elem["text"]
+    return BeautifulSoup(content, 'html.parser')
+
+def transform(soup: BeautifulSoup):
+    songs = []
+    containers = soup.find_all(id='container')
+    for item in containers:
+        if item is not None:
+            songs.append(item.get_text())
+    return songs
+
+def run(path):
+    soup = parse_html(path)
+    content = transform(soup)
+    unserialized = []
+    for song in content:
+        unserialized.append(song.strip() if song is not None else '')
+
+    return unserialized
 
 if __name__ == "__main__":
     # debug: test with random profile
@@ -98,7 +142,9 @@ if __name__ == "__main__":
 
     elem = extract(url)
     if elem is not None:
-        text = transform(elem)
-        print(text)
+        with open('reposts.txt', 'w') as fh:
+            fh.write(elem)
+        print("wrote songs to reposts.txt")
+        print(elem)
     else:
         print("Sorry, could not extract data")
