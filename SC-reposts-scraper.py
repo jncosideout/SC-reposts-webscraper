@@ -10,7 +10,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
 import time
-import pyautogui as pag
 from collections import namedtuple
 from typing import NamedTuple
 from os import path as Path
@@ -23,10 +22,10 @@ Point = NamedTuple('Point', [('x',float),('y',float)])
 def extract(url: str):
     elem = ''
     # uncomment for headless
-    # fireFoxOptions = webdriver.FirefoxOptions()
-    # fireFoxOptions.set_headless()
-    # driver = webdriver.Firefox(firefox_options=fireFoxOptions)
-    driver = webdriver.Firefox()
+    fireFoxOptions = webdriver.FirefoxOptions()
+    fireFoxOptions.set_headless()
+    driver = webdriver.Firefox(firefox_options=fireFoxOptions)
+    # driver = webdriver.Firefox()
     driver.get(url)
     
     global windowLocation
@@ -57,25 +56,23 @@ def extract(url: str):
     try:
         actions = ActionChains(driver)
         actions.move_to_element_with_offset(first_art,art_size["width"] + 1, art_size["height"] + 1)
-        # actions.send_keys(Keys.F11)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
         
         scrollReposts(driver)
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
-        # page_source = driver.page_source
-        # path = save(page_source, '.')
-        time.sleep(3)
+        page_source = driver.page_source
+        path = save(page_source, '.')
     finally:
         driver.close()
 
-    # songs_array = run(path)
+    songs_array = run(path)
 
-    # for song in songs_array:
-    #     elem = elem + song + '\n'
+    for song in songs_array:
+        elem = elem + song + '\n'
 
-    # return elem
+    return elem
 
 def scrollReposts(driver: webdriver):
     print("Scrolling")
@@ -84,18 +81,7 @@ def scrollReposts(driver: webdriver):
     css_selector = ".paging-eof"
     condition = True
     while condition:
-        # cover_art = None
-        # art_size_x = 0
-        # art_size_y = 0
-        # while art_size_y <= 0:
-        #     cover_art = driver.find_element(By.CLASS_NAME, "sound__coverArt")
-        #     art_size = cover_art.rect
-        #     art_size_x = art_size["width"]
-        #     art_size_y = art_size["height"]
-
         actions = ActionChains(driver)
-        # actions.move_to_element_with_offset(cover_art, art_size_x + 1, art_size_y + 1)
-        # actions.send_keys(Keys.F11)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
         try:
@@ -118,7 +104,6 @@ def save(text, dir):
     
     # debug
     print("~~~~~~~~~~~~~downloaded html~~~~~~~~~~~~~")
-    print(text)
     return(file_path)
     
 def parse_html(path):
@@ -153,10 +138,7 @@ def run(path):
 if __name__ == "__main__":
     # debug: test with random profile
     url = "https://soundcloud.com/notsorhody/reposts"
-
-    # debug: test with Zonz's profile
-    # url = "https://soundcloud.com/user-636779687/reposts"
-
+    
     elem = extract(url)
     if elem is not None:
         with open('reposts-1.txt', 'w') as fh:
