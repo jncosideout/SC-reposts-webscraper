@@ -26,26 +26,8 @@ def extract(url: str):
     fireFoxOptions.set_headless()
     driver = webdriver.Firefox(firefox_options=fireFoxOptions)
     # driver = webdriver.Firefox()
-    driver.get(url)
-    
-    global windowLocation
-    windowLocation = driver.get_window_position()
-    windowLocation = Point(float(windowLocation["x"]),
-                            float(windowLocation["y"]))
-    print(f"window location is {windowLocation}")
-    
-    global windowSize
-    windowSize = driver.get_window_size()
-    print(f"window size is {windowSize}")
-
-    global windowNames
-    windowNames = driver.window_handles
-
-    # Expand to fullscreen so absolute coordinates will not require
-    #  compensation for window position, browser toolbar, tabs bar, etc.
-    
-    windowLocation = Point(windowLocation.x+1, windowLocation.y+1)
-    
+    driver.get(url)    
+    print("loaded page")
     first_art = WebDriverWait(driver, 10).until(
                 EC.visibility_of(
                     driver.find_element(By.CLASS_NAME, "sound__coverArt")            
@@ -55,10 +37,12 @@ def extract(url: str):
     
     try:
         actions = ActionChains(driver)
-        actions.move_to_element_with_offset(first_art,art_size["width"] + 1, art_size["height"] + 1)
+        actions.move_to_element_with_offset(first_art,
+                                            art_size["width"] + 1,
+                                             art_size["height"] + 1)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
-        
+        print("got first art cover and did first pagedown")
         scrollReposts(driver)
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
@@ -94,6 +78,7 @@ def scrollReposts(driver: webdriver):
             condition = True
         else:
             condition = False
+            print("done scrolling")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
@@ -113,6 +98,7 @@ def parse_html(path):
     return BeautifulSoup(content, 'html.parser')
 
 def transform(soup: BeautifulSoup):
+    print("processing soup")
     songs = []
     div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
     ul_repost_list = div_repost_lazyList.contents[0]
@@ -122,6 +108,7 @@ def transform(soup: BeautifulSoup):
             coverArt_link = repost_item.find("a", class_="sound__coverArt")
             song = coverArt_link.get('href')
             songs.append(song)
+    print("done")            
     return songs
 
 def run(path):
@@ -138,7 +125,7 @@ def run(path):
 if __name__ == "__main__":
     # debug: test with random profile
     url = "https://soundcloud.com/notsorhody/reposts"
-    
+
     elem = extract(url)
     if elem is not None:
         with open('reposts-1.txt', 'w') as fh:
