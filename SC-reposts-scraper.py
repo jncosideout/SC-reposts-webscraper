@@ -1,5 +1,4 @@
 # SoundCloud reposts webscraper for Sour_Cream_Pringles@soundcloud.com
-from random import random, uniform
 from selenium import webdriver
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
@@ -15,7 +14,6 @@ from typing import NamedTuple
 from os import path as Path
 from pathlib import PurePath
 from bs4 import BeautifulSoup
-import sys
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
@@ -123,9 +121,8 @@ def run(path):
     return songs_list
 
 if __name__ == "__main__":
-    # debug: test with random profile
-    url = "https://soundcloud.com/notsorhody/reposts"
-
+    url = "https://soundcloud.com/sour_cream_pringles/reposts"
+    
     elem = extract(url)
     if elem is not None:
         with open('reposts-1.txt', 'w') as fh:
