@@ -9,6 +9,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
 import time
+from datetime import datetime
 from collections import namedtuple
 from typing import NamedTuple
 from os import path as Path
@@ -58,11 +59,14 @@ def extract(url: str):
 
 def scrollReposts(driver: webdriver):
     print("Scrolling")
+    startTime = datetime.now()
+    scrollCount = 0
     # delimiter of reposts page, signals bottom of reposts list
     # <div class="paging-eof sc-border-light-top" title=""></div>
     css_selector = ".paging-eof"
     condition = True
     while condition:
+        scrollCount += 1
         actions = ActionChains(driver)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
@@ -76,7 +80,10 @@ def scrollReposts(driver: webdriver):
             condition = True
         else:
             condition = False
-            print("done scrolling")
+            print("done scrolling, scrolled {scrollCount} times")
+    endTime = datetime.now()
+    execution = endTime - startTime
+    print(f"scrolling exectution time was {execution}")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
@@ -92,11 +99,11 @@ def save(text, dir):
 def parse_html(path):
     with open(path, 'r') as fh:
         content = fh.read()
-
     return BeautifulSoup(content, 'html.parser')
 
 def transform(soup: BeautifulSoup):
     print("processing soup")
+    startTime = datetime.now()
     songs = []
     div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
     ul_repost_list = div_repost_lazyList.contents[0]
@@ -107,7 +114,13 @@ def transform(soup: BeautifulSoup):
             song = coverArt_link.get('href')
             songs.append(song)
     print("done")            
+
+    endTime = datetime.now()
+    execution = endTime - startTime
+    print(f"parsing exectution time was {execution}")
+
     return songs
+
 
 def run(path):
     soup = parse_html(path)
@@ -122,12 +135,14 @@ def run(path):
 
 if __name__ == "__main__":
     url = "https://soundcloud.com/sour_cream_pringles/reposts"
-    
+    startTime = datetime.now()
     elem = extract(url)
     if elem is not None:
         with open('reposts-1.txt', 'w') as fh:
             fh.write(elem)
         print("wrote songs to reposts-1.txt")
-        print(elem)
     else:
         print("Sorry, could not extract data")
+    endTime = datetime.now()
+    execution = endTime - startTime
+    print(f"total exectution time was {execution}")
