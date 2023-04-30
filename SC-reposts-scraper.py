@@ -18,20 +18,25 @@ from bs4 import BeautifulSoup
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
-def extract(url: str):
-    elem = ''
+def extractSongList(url: str):
+    songList = ''
     # uncomment for headless
-    fireFoxOptions = webdriver.FirefoxOptions()
-    fireFoxOptions.set_headless()
-    driver = webdriver.Firefox(firefox_options=fireFoxOptions)
-    # driver = webdriver.Firefox()
+    # fireFoxOptions = webdriver.FirefoxOptions()
+    # fireFoxOptions.add_argument("-headless")
+    # driver = webdriver.Firefox(options=fireFoxOptions)
+
+    # uncomment for not headless
+    driver = webdriver.Firefox()
+
     driver.get(url)    
     print("loaded page")
-    first_art = WebDriverWait(driver, 10).until(
-                EC.visibility_of(
-                    driver.find_element(By.CLASS_NAME, "sound__coverArt")            
+
+    # grab first song album art for starting reference point to scroll on page
+    first_art = WebDriverWait(driver, timeout=5).until(
+                    EC.visibility_of_element_located(
+                        (By.CLASS_NAME, "sound__artwork")            
+                    )
                 )
-            )
     art_size = first_art.rect
     
     try:
@@ -53,9 +58,9 @@ def extract(url: str):
     songs_array = run(path)
 
     for song in songs_array:
-        elem = elem + song + '\n'
+        songList = songList + song + '\n'
 
-    return elem
+    return songList
 
 def scrollReposts(driver: webdriver):
     print("Scrolling")
@@ -63,7 +68,8 @@ def scrollReposts(driver: webdriver):
     scrollCount = 0
     # delimiter of reposts page, signals bottom of reposts list
     # <div class="paging-eof sc-border-light-top" title=""></div>
-    css_selector = ".paging-eof"
+    css_selector_name = "paging-eof"
+    css_selector = "." + css_selector_name
     condition = True
     while condition:
         scrollCount += 1
@@ -71,16 +77,18 @@ def scrollReposts(driver: webdriver):
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
         try:
-            WebDriverWait(driver, 1).until(
+            element = WebDriverWait(driver, 1).until(
                 EC.visibility_of_element_located(
                     (By.CSS_SELECTOR, css_selector)            
                 )
             )
+            
         except TimeoutException:
             condition = True
         else:
-            condition = False
-            print("done scrolling, scrolled {scrollCount} times")
+            isFound = css_selector_name in element.get_attribute("class")
+            condition = not isFound
+            print(f"done scrolling, scrolled {scrollCount} times")
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"scrolling exectution time was {execution}")
@@ -136,10 +144,10 @@ def run(path):
 if __name__ == "__main__":
     url = "https://soundcloud.com/sour_cream_pringles/reposts"
     startTime = datetime.now()
-    elem = extract(url)
-    if elem is not None:
+    songList = extractSongList(url)
+    if songList is not None:
         with open('reposts-1.txt', 'w') as fh:
-            fh.write(elem)
+            fh.write(songList)
         print("wrote songs to reposts-1.txt")
     else:
         print("Sorry, could not extract data")
