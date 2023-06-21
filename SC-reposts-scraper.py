@@ -38,7 +38,13 @@ def extractSongList(url: str):
                     )
                 )
     art_size = first_art.rect
-    
+    # https://stackoverflow.com/questions/44777053/selenium-movetargetoutofboundsexception-with-firefox
+    # Browsers other than Firefox treat Webdrivers move_to_element action as scroll to part
+    # of page with element, then hover over it. Firefox seems to have taken a hardline stance
+    # that move_to_element is just "hover over" and we are waiting for a scroll action to fix this.
+    # For now you have to workaround this bug using javascript
+    driver.execute_script("arguments[0].scrollIntoView();", first_art)
+
     try:
         actions = ActionChains(driver)
         actions.move_to_element_with_offset(first_art,
@@ -52,9 +58,6 @@ def extractSongList(url: str):
         # # you try to access the properties after the driver quit
         global page_source
         page_source = driver.page_source
-        global path 
-        # path = save(page_source, '.')
-        # print(f"saved to {path}")
     finally:
         driver.close()
 
@@ -108,9 +111,6 @@ def save(text, dir):
     return(file_path)
     
 def parse_html():
-    # with open(path, 'r') as fh:
-    #     content = fh.read()
-
     return BeautifulSoup(page_source, 'html.parser')
 
 def transform(soup: BeautifulSoup):
