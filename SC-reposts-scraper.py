@@ -50,12 +50,15 @@ def extractSongList(url: str):
         scrollReposts(driver)
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
+        global page_source
         page_source = driver.page_source
-        path = save(page_source, '.')
+        global path 
+        # path = save(page_source, '.')
+        # print(f"saved to {path}")
     finally:
         driver.close()
 
-    songs_array = run(path)
+    songs_array = run()
 
     for song in songs_array:
         songList = songList + song + '\n'
@@ -104,10 +107,11 @@ def save(text, dir):
     print("~~~~~~~~~~~~~downloaded html~~~~~~~~~~~~~")
     return(file_path)
     
-def parse_html(path):
-    with open(path, 'r') as fh:
-        content = fh.read()
-    return BeautifulSoup(content, 'html.parser')
+def parse_html():
+    # with open(path, 'r') as fh:
+    #     content = fh.read()
+
+    return BeautifulSoup(page_source, 'html.parser')
 
 def transform(soup: BeautifulSoup):
     print("processing soup")
@@ -130,8 +134,8 @@ def transform(soup: BeautifulSoup):
     return songs
 
 
-def run(path):
-    soup = parse_html(path)
+def run():
+    soup = parse_html()
     content = transform(soup)
     songs_list = []
     for song in content:
