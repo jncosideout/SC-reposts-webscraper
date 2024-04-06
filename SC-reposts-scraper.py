@@ -18,7 +18,7 @@ from bs4 import BeautifulSoup
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
-def extractSongList(url: str):
+def scrapeReposts(url: str):
     songList = ''
     # uncomment for headless
     # fireFoxOptions = webdriver.FirefoxOptions()
@@ -54,11 +54,11 @@ def extractSongList(url: str):
         actions.perform()
         print("got first art cover and did first pagedown")
         scrollReposts(driver)
+    finally:
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
         global page_source
         page_source = driver.page_source
-    finally:
         driver.close()
 
     songs_array = run()
@@ -94,7 +94,8 @@ def scrollReposts(driver: webdriver):
         else:
             isFound = css_selector_name in element.get_attribute("class")
             condition = not isFound
-            print(f"done scrolling, scrolled {scrollCount} times")
+            if isFound:
+                print(f"done scrolling, scrolled {scrollCount} times")
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"scrolling exectution time was {execution}")
@@ -148,13 +149,16 @@ def run():
 if __name__ == "__main__":
     url = "https://soundcloud.com/sour_cream_pringles/reposts"
     startTime = datetime.now()
-    songList = extractSongList(url)
+    songList = scrapeReposts(url)
     if songList is not None:
         with open('reposts-1.txt', 'w') as fh:
             fh.write(songList)
         print("wrote songs to reposts-1.txt")
     else:
         print("Sorry, could not extract data")
+        path = save(page_source, '.')
+        print(f"saved to {path}")    
+
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"total exectution time was {execution}")
