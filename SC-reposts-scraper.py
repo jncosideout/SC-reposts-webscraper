@@ -16,6 +16,7 @@ from os import path as Path
 from pathlib import PurePath
 from bs4 import BeautifulSoup
 import argparse
+from random import random, uniform
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
@@ -75,11 +76,14 @@ def scrollReposts(driver: webdriver):
         if scrollLimit > 0 and scrollCount > scrollLimit:
             break
         scrollCount += 1
+
         actions = ActionChains(driver)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
+        # randomize the wait time to avoid bot detection
+        pause = uniform(1.0, 3.0)
         try:
-            element = WebDriverWait(driver, 1).until(
+            element = WebDriverWait(driver, pause).until(
                 EC.visibility_of_element_located(
                     (By.CSS_SELECTOR, css_selector)            
                 )
