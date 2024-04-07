@@ -15,11 +15,13 @@ from typing import NamedTuple
 from os import path as Path
 from pathlib import PurePath
 from bs4 import BeautifulSoup
+import argparse
 
 Point = NamedTuple('Point', [('x',float),('y',float)])
 
 def scrapeReposts(url: str):
-    songList = ''
+    global page_source
+
     # uncomment for headless
     # fireFoxOptions = webdriver.FirefoxOptions()
     # fireFoxOptions.add_argument("-headless")
@@ -57,16 +59,8 @@ def scrapeReposts(url: str):
     finally:
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
-        global page_source
         page_source = driver.page_source
         driver.close()
-
-    songs_array = run()
-
-    for song in songs_array:
-        songList = songList + song + '\n'
-
-    return songList
 
 def scrollReposts(driver: webdriver):
     print("Scrolling")
@@ -76,8 +70,10 @@ def scrollReposts(driver: webdriver):
     # <div class="paging-eof sc-border-light-top" title=""></div>
     css_selector_name = "paging-eof"
     css_selector = "." + css_selector_name
-    condition = True
-    while condition:
+    continue_scrolling = True
+    while continue_scrolling:
+        if scrollLimit > 0 and scrollCount > scrollLimit:
+            break
         scrollCount += 1
         actions = ActionChains(driver)
         actions.send_keys(Keys.PAGE_DOWN)
@@ -90,15 +86,15 @@ def scrollReposts(driver: webdriver):
             )
             
         except TimeoutException:
-            condition = True
+            continue_scrolling = True
         else:
             isFound = css_selector_name in element.get_attribute("class")
-            condition = not isFound
+            continue_scrolling = not isFound
             if isFound:
                 print(f"done scrolling, scrolled {scrollCount} times")
     endTime = datetime.now()
     execution = endTime - startTime
-    print(f"scrolling exectution time was {execution}")
+    print(f"scrolling execution time was {execution}")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
@@ -116,7 +112,6 @@ def parse_html():
 
 def transform(soup: BeautifulSoup):
     print("processing soup")
-    startTime = datetime.now()
     songs = []
     div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
     ul_repost_list = div_repost_lazyList.contents[0]
@@ -127,15 +122,11 @@ def transform(soup: BeautifulSoup):
             song = coverArt_link.get('href')
             songs.append(song)
     print("done")            
-
-    endTime = datetime.now()
-    execution = endTime - startTime
-    print(f"parsing exectution time was {execution}")
-
     return songs
 
 
 def run():
+    startTime = datetime.now()
     soup = parse_html()
     content = transform(soup)
     songs_list = []
@@ -144,12 +135,47 @@ def run():
         full_url = "https://soundcloud.com" + stripped_song
         songs_list.append(full_url)
 
+    endTime = datetime.now()
+    execution = endTime - startTime
+    print(f"parsing exectution time was {execution}")
     return songs_list
 
 if __name__ == "__main__":
     url = "https://soundcloud.com/sour_cream_pringles/reposts"
     startTime = datetime.now()
-    songList = scrapeReposts(url)
+
+    parser = argparse.ArgumentParser("SC-reposts-scraper", argument_default=argparse.SUPPRESS)
+    parser.add_argument("saved_page_path",
+                        nargs='?',                        
+                        help="path to html file of saved reposts webpage")
+    parser.add_argument("scroll_limit",
+                        nargs='?',
+                        help="limit for number of times webdriver scrolls with pageDown")
+    args = parser.parse_args()
+
+    pathToHtml = ''
+    if hasattr(args, "saved_page_path"):
+        pathToHtml = args.saved_page_path
+    scrollLimit = 0
+    if hasattr(args, "scroll_limit"):
+        scrollLimit = args.scroll_limit
+    
+    if pathToHtml != '':
+        try:
+            with open(pathToHtml, 'r') as fh:
+                page_source = fh.read()
+        except (FileNotFoundError, OSError) as e:
+            print(f'{pathToHtml} could not be opened')
+            print(e)
+            quit()
+    else:
+        scrapeReposts(url)
+    
+    songs_array = run()
+
+    for song in songs_array:
+        songList = songList + song + '\n'
+
     if songList is not None:
         with open('reposts-1.txt', 'w') as fh:
             fh.write(songList)
