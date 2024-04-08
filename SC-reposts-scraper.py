@@ -137,9 +137,16 @@ def parse_html():
 def transform(soup: BeautifulSoup):
     print("processing soup")
     songs = []
+    if   soup is None:
+        return
     div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
-    ul_repost_list = div_repost_lazyList.contents[0]
-    
+    try:
+        ul_repost_list = div_repost_lazyList.contents[0]
+    except Exception as ex:
+        print('Encountered exception type ({}) while transforming soup'.format(type(ex)))
+        print(ex.with_traceback)
+        return
+
     for repost_item in ul_repost_list.children:
         if repost_item is not None:
             coverArt_link = repost_item.find("a", class_="sound__coverArt")
@@ -154,6 +161,8 @@ def run():
     soup = parse_html()
     content = transform(soup)
     songs_list = []
+    if content is None:
+        return
     for song in content:
         stripped_song = song.strip() if song is not None else ''
         full_url = "https://soundcloud.com" + stripped_song
@@ -199,17 +208,17 @@ if __name__ == "__main__":
     
     songs_array = run()
 
-    for song in songs_array:
-        songList = songList + song + '\n'
 
-    if songList is not None:
+    if songs_array is not None:
+        for song in songs_array:
+            songList = songList + song + '\n'
         with open('reposts-1.txt', 'w') as fh:
             fh.write(songList)
         print("wrote songs to reposts-1.txt")
     else:
         print("Sorry, could not extract data")
-        path = save(page_source, '.')
-        print(f"saved to {path}")    
+        if pathToHtml == '':
+            save(page_source, '.')
 
     endTime = datetime.now()
     execution = endTime - startTime
