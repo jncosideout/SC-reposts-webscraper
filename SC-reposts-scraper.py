@@ -8,7 +8,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException
-import time
 from datetime import datetime
 from collections import namedtuple
 from typing import NamedTuple
@@ -16,13 +15,27 @@ from os import path as Path
 from pathlib import PurePath
 from bs4 import BeautifulSoup
 import argparse
-from random import random, uniform
+from random import uniform
+from signal import signal, SIGINT, SIGTERM, SIGQUIT
 
+# Globals
 Point = NamedTuple('Point', [('x',float),('y',float)])
+driver: Firefox
+page_source: str
+continue_scrolling = True
+
+def handleInterrupt(*_):
+    global continue_scrolling
+    print('System signal captured')
+    continue_scrolling = False
+
+signal(SIGINT, handleInterrupt)
+signal(SIGTERM, handleInterrupt)
+signal(SIGQUIT, handleInterrupt)
 
 def scrapeReposts(url: str):
     global page_source
-
+    global driver
     # uncomment for headless
     # fireFoxOptions = webdriver.FirefoxOptions()
     # fireFoxOptions.add_argument("-headless")
@@ -62,8 +75,10 @@ def scrapeReposts(url: str):
         # # you try to access the properties after the driver quit
         page_source = driver.page_source
         driver.close()
+        driver.quit()
 
 def scrollReposts(driver: webdriver):
+    global continue_scrolling
     print("Scrolling")
     startTime = datetime.now()
     scrollCount = 0
@@ -71,9 +86,10 @@ def scrollReposts(driver: webdriver):
     # <div class="paging-eof sc-border-light-top" title=""></div>
     css_selector_name = "paging-eof"
     css_selector = "." + css_selector_name
-    continue_scrolling = True
+
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
+            print(f"scroll limit hit, scrolled {scrollCount} times")
             break
         scrollCount += 1
 
@@ -90,7 +106,10 @@ def scrollReposts(driver: webdriver):
             )
             
         except TimeoutException:
-            continue_scrolling = True
+            continue
+        except Exception as ex:
+            print('Encountered exception type ({}) while scrolling'.format(type(ex)))
+            break
         else:
             isFound = css_selector_name in element.get_attribute("class")
             continue_scrolling = not isFound
@@ -109,6 +128,7 @@ def save(text, dir):
     
     # debug
     print("~~~~~~~~~~~~~downloaded html~~~~~~~~~~~~~")
+    print(f"saved to {file_path}")
     return(file_path)
     
 def parse_html():
@@ -151,10 +171,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("SC-reposts-scraper", argument_default=argparse.SUPPRESS)
     parser.add_argument("saved_page_path",
                         nargs='?',                        
-                        help="path to html file of saved reposts webpage")
-    parser.add_argument("scroll_limit",
+                        help="path to html file of saved reposts webpage to parse")
+    parser.add_argument("--scroll_limit",
                         nargs='?',
-                        help="limit for number of times webdriver scrolls with pageDown")
+                        help="limit for number of times webdriver scrolls with pageDown",
+                        type=int)
     args = parser.parse_args()
 
     pathToHtml = ''
@@ -166,6 +187,7 @@ if __name__ == "__main__":
     
     if pathToHtml != '':
         try:
+            print(f'parsing local html {pathToHtml}')
             with open(pathToHtml, 'r') as fh:
                 page_source = fh.read()
         except (FileNotFoundError, OSError) as e:
