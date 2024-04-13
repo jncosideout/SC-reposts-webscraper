@@ -25,6 +25,17 @@ page_source: str
 continue_scrolling = True
 
 def handleInterrupt(*_):
+    '''Intended to stop scrolling the page early so page_source can be captured
+    and processed when the user sends a keyboard interrupt Ctrl+C
+
+    WARNING: Sending SIGINT to the parent process (e.g. shell when invoking SC-reposts-scraper.py
+    or when running in a vscode debug session) will also kill the webdriver marionette process
+    causing the webdriver to throw several errors, such as urllib3.exceptions.MaxRetryError
+    or selenium-specific errors when accessing webdriver properties
+
+    Therefore, only send SIGINT to the python process running the script itself
+
+    '''
     global continue_scrolling
     print('System signal captured')
     continue_scrolling = False
