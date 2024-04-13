@@ -45,8 +45,7 @@ signal(SIGTERM, handleInterrupt)
 signal(SIGQUIT, handleInterrupt)
 
 def scrapeReposts(url: str):
-    global page_source
-    global driver
+    global page_source, driver
     # uncomment for headless
     # fireFoxOptions = webdriver.FirefoxOptions()
     # fireFoxOptions.add_argument("-headless")
@@ -125,7 +124,7 @@ def scrollReposts(driver: webdriver):
             isFound = css_selector_name in element.get_attribute("class")
             continue_scrolling = not isFound
             if isFound:
-                print(f"done scrolling, scrolled {scrollCount} times")
+                print(f"Finished scrolling to {css_selector_name}, scrolled {scrollCount} times")
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"scrolling execution time was {execution}")
@@ -190,9 +189,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("SC-reposts-scraper", argument_default=argparse.SUPPRESS)
     parser.add_argument("saved_page_path",
+                        metavar="path/to/reposts.html",
                         nargs='?',                        
                         help="path to html file of saved reposts webpage to parse")
-    parser.add_argument("--scroll_limit",
+    parser.add_argument("--scroll-limit",
                         nargs='?',
                         help="limit for number of times webdriver scrolls with pageDown",
                         type=int)
@@ -218,14 +218,19 @@ if __name__ == "__main__":
         scrapeReposts(url)
     
     songs_array = run()
-
+    songList = ''
 
     if songs_array is not None:
-        for song in songs_array:
-            songList = songList + song + '\n'
-        with open('reposts-1.txt', 'w') as fh:
-            fh.write(songList)
-        print("wrote songs to reposts-1.txt")
+        try:
+            for song in songs_array:
+                songList = songList + song + '\n'
+            with open('reposts-1.txt', 'w') as fh:
+                fh.write(songList)
+            print("wrote songs to reposts-1.txt")
+        except Exception as ex:
+            print('Error writing songs to file {}'.format(type(ex)))
+            if pathToHtml == '':
+                save(page_source, '.')
     else:
         print("Sorry, could not extract data")
         if pathToHtml == '':
