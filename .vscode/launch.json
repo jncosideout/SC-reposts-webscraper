@@ -19,7 +19,9 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["path/to/html", "3000"]
+            "args": [// "path/to/html",
+                     "--scroll-limit",
+                     "3000"]
         }
     ]
 }
