@@ -23,10 +23,11 @@ Point = NamedTuple('Point', [('x',float),('y',float)])
 driver: Firefox
 page_source: str
 continue_scrolling = True
+scrolling_started = False
 
-def handleInterrupt(*_):
+def handleInterrupt(signal, frame):
     '''Intended to stop scrolling the page early so page_source can be captured
-    and processed when the user sends a keyboard interrupt Ctrl+C
+    and processed when the user sends a keyboard interrupt Ctrl+C for SIGINT or Ctrl+\ for SIGQUIT
 
     WARNING: Sending SIGINT to the parent process (e.g. shell when invoking SC-reposts-scraper.py
     or when running in a vscode debug session) will also kill the webdriver marionette process
@@ -36,9 +37,22 @@ def handleInterrupt(*_):
     Therefore, only send SIGINT to the python process running the script itself
 
     '''
+    signal_name = ''
+    match signal:
+        case 2:
+            signal_name = 'SIGINT'
+        case 3:
+            signal_name = 'SIGQUIT'
+        case 15:
+            signal_name = 'SIGTERM'
+        case _:
+            signal_name = 'Unknown: {}'.format(str(signal))
+            
     global continue_scrolling
-    print('System signal captured')
-    continue_scrolling = False
+    print(f'{signal_name} System signal captured')
+    if scrolling_started == True:
+        print('scrolling will not continue')
+        continue_scrolling = False
 
 signal(SIGINT, handleInterrupt)
 signal(SIGTERM, handleInterrupt)
@@ -88,7 +102,8 @@ def scrapeReposts(url: str):
         driver.quit()
 
 def scrollReposts(driver: webdriver):
-    global continue_scrolling
+    global continue_scrolling, scrolling_started
+    scrolling_started = True
     print("Scrolling")
     startTime = datetime.now()
     scrollCount = 0
