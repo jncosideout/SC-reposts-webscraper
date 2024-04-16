@@ -7,9 +7,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from datetime import datetime
-from collections import namedtuple
 from typing import NamedTuple
 from os import path as Path
 from pathlib import PurePath
@@ -17,6 +16,9 @@ from bs4 import BeautifulSoup
 import argparse
 from random import uniform
 from signal import signal, SIGINT, SIGTERM, SIGQUIT
+from time import sleep
+import sys
+import traceback
 
 # Globals
 Point = NamedTuple('Point', [('x',float),('y',float)])
@@ -72,6 +74,9 @@ def scrapeReposts(url: str):
     print("loaded page")
 
     try:
+        # randomize the wait time to avoid bot detection
+        pause = uniform(1.5, 4.0)
+        sleep(pause)
         scrollReposts(driver)
     finally:
         # # Make a copy of relevant data, because Selenium will throw if
@@ -98,27 +103,52 @@ def scrollReposts(driver: webdriver):
         scrollCount += 1
 
         actions = ActionChains(driver)
-        actions.send_keys(Keys.PAGE_DOWN)
+        actions.send_keys(Keys.END)
         actions.perform()
         # randomize the wait time to avoid bot detection
-        pause = uniform(1.0, 3.0)
+        pause = uniform(0.5, 4.0)
         try:
-            element = WebDriverWait(driver, pause).until(
-                EC.visibility_of_element_located(
-                    (By.CSS_SELECTOR, css_selector)            
+            try:
+                # look for any art element. The reposts page is a long list of songs with art,
+                # so if we don't see one, we were redirected to a new webpage
+                # (probably a captcha page due to bot detection)
+                art_element = WebDriverWait(driver, timeout=0.5).until(
+                    EC.visibility_of_element_located(
+                        (By.CLASS_NAME, "sound__artwork")
+                    )
                 )
-            )
-            
-        except TimeoutException:
-            continue
+            except NoSuchElementException:
+                print('Pausing for user intervention (webdriver was probably caught by bot detection)')
+                # read from keyboard to continue (a human user passed the captcha to allow webscraping to continue)
+                user_input = input("Enter 'y' to continue. Enter anything else or nothing to finish scrolling and process page")
+                if art_element is not None or user_input == 'y':
+                    continue
+                else:
+                    break
+
+            try:
+                # keep scrolling until the EOF element is found, signaling the end of the page has been reached
+                eof_element = WebDriverWait(driver, timeout=pause).until(
+                    EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, css_selector)
+                    )
+                )
+            except TimeoutException:
+                # a Timeout means we haven't reached the EOF element yet
+                continue
+            else:
+                isFound = css_selector_name in eof_element.get_attribute("class")
+                continue_scrolling = not isFound
+                if isFound:
+                    print(f"Finished scrolling to {css_selector_name}, scrolled {scrollCount} times")
         except Exception as ex:
             print('Encountered exception type ({}) while scrolling'.format(type(ex)))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            traceback.print_tb(ex.__traceback__)
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            # stop scrolling because of unexpected exception
             break
-        else:
-            isFound = css_selector_name in element.get_attribute("class")
-            continue_scrolling = not isFound
-            if isFound:
-                print(f"Finished scrolling to {css_selector_name}, scrolled {scrollCount} times")
+    
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"scrolling execution time was {execution}")
@@ -179,6 +209,8 @@ def run():
 
 if __name__ == "__main__":
     url = "https://soundcloud.com/sour_cream_pringles/reposts"
+    # url = "https://soundcloud.com/stelloydtunes/reposts"
+
     startTime = datetime.now()
 
     parser = argparse.ArgumentParser("SC-reposts-scraper", argument_default=argparse.SUPPRESS)

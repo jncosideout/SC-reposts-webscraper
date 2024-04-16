@@ -21,7 +21,7 @@
             "justMyCode": false,
             "args": [// "path/to/html",
                      "--scroll-limit",
-                     "3000"]
+                     "4000"]
         }
     ]
 }
