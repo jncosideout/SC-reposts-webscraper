@@ -204,7 +204,9 @@ def transform(soup: BeautifulSoup):
         ul_repost_list = div_repost_lazyList.contents[0]
     except Exception as ex:
         print('Encountered exception type ({}) while transforming soup'.format(type(ex)))
-        print(ex.with_traceback)
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        traceback.print_tb(ex.__traceback__)
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         return
 
     for repost_item in ul_repost_list.children:
@@ -281,6 +283,9 @@ if __name__ == "__main__":
             print("wrote songs to reposts-1.txt")
         except Exception as ex:
             print('Error writing songs to file {}'.format(type(ex)))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            traceback.print_tb(ex.__traceback__)
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             if pathToHtml == '':
                 save(page_source, '.')
     else:
