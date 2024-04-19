@@ -78,8 +78,8 @@ def scrapeReposts(url: str):
     print("loaded page")
 
     try:
-        # randomize the wait time to avoid bot detection
-        pause = uniform(1.5, 4.0)
+        # pause to avoid bot detection
+        pause = 3.0
         sleep(pause)
         scrollReposts(driver)
     finally:
@@ -92,7 +92,7 @@ def scrapeReposts(url: str):
 def scrollReposts(driver: webdriver):
     global continue_scrolling, scrolling_started
     scrolling_started = True
-    print("Scrolling")
+    print("Scrolling started")
     startTime = datetime.now()
     scrollCount = 0
     # delimiter of reposts page, signals bottom of reposts list
@@ -110,24 +110,30 @@ def scrollReposts(driver: webdriver):
         actions.send_keys(Keys.END)
         actions.perform()
         # randomize the wait time to avoid bot detection
-        pause = uniform(0.5, 4.0)
+        pause = uniform(1, 4.0)
         try:
             try:
-                # look for any art element. The reposts page is a long list of songs with art,
-                # so if we don't see one, we were redirected to a new webpage
-                # (probably a captcha page due to bot detection)
-                art_element = WebDriverWait(driver, timeout=0.5).until(
-                    EC.visibility_of_element_located(
-                        (By.CLASS_NAME, "sound__artwork")
-                    )
-                )
+                captcha_url='geo.captcha-delivery.com'
+                xpath_to_captcha=f"//iframe[contains(@src, '{captcha_url}')]"
+                # (X path) ^^ to iframe for captcha_url 
+
+                # if we see this iframe, we were redirected to a bot detection webpage with a captcha
+                bot_dectection_iframe = driver.find_element(By.XPATH, xpath_to_captcha)
             except NoSuchElementException:
-                print('Pausing for user intervention (webdriver was probably caught by bot detection)')
-                # read from keyboard to continue (a human user passed the captcha to allow webscraping to continue)
-                user_input = input("Enter 'y' to continue. Enter anything else or nothing to finish scrolling and process page")
-                if art_element is not None or user_input == 'y':
+                # keep scrolling, have not been detected yet
+                pass
+            else:
+                isFound = captcha_url in bot_dectection_iframe.get_attribute("src")
+                if isFound:
+                    print(f"Encountered bot detection page from {captcha_url}!")
+                print('Pausing for user intervention (webdriver was caught by bot detection)')
+                # read from keyboard to continue (allow human user to pass the captcha and to continue webscraping)
+                user_input = input("Enter 'y' after you beat the captcha. Enter anything else or nothing to finish scrolling and process page")
+                if user_input == 'y':
+                    print('User beat captcha, continue scrolling')
                     continue
                 else:
+                    print('User did not beat captcha, quit scrolling, process the page early')
                     break
 
             try:
