@@ -17,7 +17,7 @@ import argparse
 from random import uniform
 from signal import signal, SIGINT, SIGTERM, SIGQUIT
 from time import sleep
-import sys
+from sys import stdout
 import traceback
 
 # Globals
@@ -153,7 +153,12 @@ def scrollReposts(driver: webdriver):
                 isFound = css_selector_name in eof_element.get_attribute("class")
                 continue_scrolling = not isFound
                 if isFound:
-                    print(f"Finished scrolling to {css_selector_name}, scrolled {scrollCount} times")
+                    print(f"Finished scrolling to {css_selector_name}")
+
+            # Progress display of scrolling, with message that updates on one line
+            # (rather than printing newlines, it writes over itself using \r carriage return)
+            stdout.write("\rscrolled %i times" % scrollCount)
+            stdout.flush()
         except Exception as ex:
             print('Encountered exception type ({}) while scrolling'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
