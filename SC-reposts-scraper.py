@@ -32,12 +32,16 @@ def handleInterrupt(signal, frame):
     and processed when the user sends a keyboard interrupt Ctrl+C for SIGINT or Ctrl+\ for SIGQUIT
 
     WARNING: Sending SIGINT to the parent process (e.g. shell when invoking SC-reposts-scraper.py
-    or when running in a vscode debug session) will also kill the webdriver marionette process
+    or when running this script in a vscode debug session) will also kill the webdriver marionette process
     causing the webdriver to throw several errors, such as urllib3.exceptions.MaxRetryError
     or selenium-specific errors when accessing webdriver properties
 
-    Therefore, only send SIGINT to the python process running the script itself
-
+    Therefore, only send SIGINT to the python process running the script itself.
+    You can do this by using sh -c and exec to get the command's PID even before it runs.
+    `sh -c 'echo $$; exec python SC-reposts-scraper.py'`
+    This starts a new shell, prints the PID of that shell, 
+    and then uses the exec builtin to replace the shell with your command, ensuring it has the same PID.
+    `kill [-TERM|-INT|-QUIT] $PID` where $PID is the process ID echoed from the last command.
     '''
     signal_name = ''
     match signal:
