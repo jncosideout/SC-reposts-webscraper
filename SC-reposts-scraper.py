@@ -47,9 +47,13 @@ def handleInterrupt(signal, frame):
     Therefore, only send SIGINT to the python process running the script itself.
     You can do this by using sh -c and exec to get the command's PID even before it runs.
     `sh -c 'echo $$; exec python SC-reposts-scraper.py'`
-    This starts a new shell, prints the PID of that shell, 
-    and then uses the exec builtin to replace the shell with your command, ensuring it has the same PID.
+    This starts a new shell, prints the PID of that shell, and then uses the exec builtin to replace
+    the shell with your command (running this python script), ensuring it has the same PID.
+    Of course, you can add '&' to the end of this command to run it in the background. 
+    When you are ready to terminate the script early, run the kill command:
     `kill [-TERM|-INT|-QUIT] $PID` where $PID is the process ID echoed from the last command.
+    For convenience, you can save $$ to a file called MYPID instead of echoing it,
+    then run ./kill-TERM_MYPID with bash which reads MYPID from that file.
     '''
     signal_name = ''
     match signal:
@@ -197,7 +201,7 @@ def parse_html():
 def transform(soup: BeautifulSoup):
     print("processing soup")
     songs = []
-    if   soup is None:
+    if soup is None:
         return
     div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
     try:

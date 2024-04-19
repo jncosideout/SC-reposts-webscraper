@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+MYPID=$(<MYPID)
+kill -TERM $MYPID
