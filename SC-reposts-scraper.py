@@ -20,8 +20,16 @@ from time import sleep
 from sys import stdout
 import traceback
 
+from dotenv import load_dotenv, find_dotenv
+# Load the .env file using find_dotenv(), which searches for the .env file starting from the current directory
+load_dotenv(dotenv_path=find_dotenv(),  # Or BASE_DIR/'.env',
+            verbose=True,               # Print verbose output for debugging purposes
+            override=True)              # Override system environment variables with values from .env
+
+# By using override=True, the system environment variables will be overridden by the values from the .env file
+# This ensures that you access the latest values from the .env file every time you run the script
+
 # Globals
-Point = NamedTuple('Point', [('x',float),('y',float)])
 driver: Firefox
 page_source: str
 continue_scrolling = True
@@ -169,7 +177,7 @@ def scrollReposts(driver: webdriver):
     
     endTime = datetime.now()
     execution = endTime - startTime
-    print(f"scrolling execution time was {execution}")
+    print(f"\nscrolling execution time was {execution}")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
@@ -222,7 +230,7 @@ def run():
 
     endTime = datetime.now()
     execution = endTime - startTime
-    print(f"parsing exectution time was {execution}")
+    print(f"parsing execution time was {execution}")
     return songs_list
 
 if __name__ == "__main__":
