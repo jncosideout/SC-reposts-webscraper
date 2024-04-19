@@ -8,7 +8,7 @@
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "SC-reposts-scraper.py",
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -16,7 +16,7 @@
             "name": "Run with args",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "SC-reposts-scraper.py",
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": [// "path/to/html",
