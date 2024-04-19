@@ -6,11 +6,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from datetime import datetime
 from typing import NamedTuple
 from os import path as Path
+from os import system, getenv
 from pathlib import PurePath
 from bs4 import BeautifulSoup
 import argparse
@@ -125,6 +125,9 @@ def scrollReposts(driver: webdriver):
             else:
                 isFound = captcha_url in bot_dectection_iframe.get_attribute("src")
                 if isFound:
+                    AUDIO_ALERT = getenv('AUDIO_ALERT')
+                    if AUDIO_ALERT != '' and Path.isfile(AUDIO_ALERT):
+                        system(f'mpv {AUDIO_ALERT}')
                     print(f"Encountered bot detection page from {captcha_url}!")
                 print('Pausing for user intervention (webdriver was caught by bot detection)')
                 # read from keyboard to continue (allow human user to pass the captcha and to continue webscraping)
@@ -218,8 +221,8 @@ def run():
     return songs_list
 
 if __name__ == "__main__":
-    url = "https://soundcloud.com/sour_cream_pringles/reposts"
-    # url = "https://soundcloud.com/stelloydtunes/reposts"
+    SC_PROFILE=getenv('SC_PROFILE')
+    url = f"https://soundcloud.com/{SC_PROFILE}/reposts"
 
     startTime = datetime.now()
 
