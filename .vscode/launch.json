@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Current File",
+            "name": "Debug SC-reposts-scraper.py",
             "type": "debugpy",
             "request": "launch",
             "program": "SC-reposts-scraper.py",

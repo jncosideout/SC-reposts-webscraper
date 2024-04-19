@@ -17,7 +17,6 @@ import argparse
 from random import uniform
 from signal import signal, SIGINT, SIGTERM, SIGQUIT
 from time import sleep
-from sys import stdout
 import traceback
 
 from dotenv import load_dotenv, find_dotenv
@@ -168,9 +167,8 @@ def scrollReposts(driver: webdriver):
                     print(f"Finished scrolling to {css_selector_name}")
 
             # Progress display of scrolling, with message that updates on one line
-            # (rather than printing newlines, it writes over itself using \r carriage return)
-            stdout.write("\rscrolled %i times" % scrollCount)
-            stdout.flush()
+            # (rather than printing newlines, it writes over the last line of output using '\r' carriage return)
+            print(f"scrolled {scrollCount} times", end='\r')
         except Exception as ex:
             print('Encountered exception type ({}) while scrolling'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
