@@ -116,6 +116,9 @@ def scrollReposts(driver: webdriver):
             print(f"scroll limit hit, scrolled {scrollCount} times")
             break
         scrollCount += 1
+        # Progress display of scrolling, with message that updates on one line
+        # (rather than printing newlines, it writes over the last line of output using '\r' carriage return)
+        print(f"scrolled {scrollCount} times", end='\r')
 
         actions = ActionChains(driver)
         actions.send_keys(Keys.END)
@@ -139,7 +142,7 @@ def scrollReposts(driver: webdriver):
                     AUDIO_ALERT = getenv('AUDIO_ALERT')
                     if AUDIO_ALERT != '' and Path.isfile(AUDIO_ALERT):
                         system(f'mpv {AUDIO_ALERT}')
-                    print(f"Encountered bot detection page from {captcha_url}!")
+                    print(f"\nEncountered bot detection page from {captcha_url}!")
                 print('Pausing for user intervention (webdriver was caught by bot detection)')
                 # read from keyboard to continue (allow human user to pass the captcha and to continue webscraping)
                 user_input = input("Enter 'y' after you beat the captcha. Enter anything else or nothing to finish scrolling and process page")
@@ -164,13 +167,9 @@ def scrollReposts(driver: webdriver):
                 isFound = css_selector_name in eof_element.get_attribute("class")
                 continue_scrolling = not isFound
                 if isFound:
-                    print(f"Finished scrolling to {css_selector_name}")
-
-            # Progress display of scrolling, with message that updates on one line
-            # (rather than printing newlines, it writes over the last line of output using '\r' carriage return)
-            print(f"scrolled {scrollCount} times", end='\r')
+                    print(f"\nFinished scrolling to {css_selector_name}")
         except Exception as ex:
-            print('Encountered exception type ({}) while scrolling'.format(type(ex)))
+            print('\nEncountered exception type ({}) while scrolling'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             traceback.print_tb(ex.__traceback__)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
