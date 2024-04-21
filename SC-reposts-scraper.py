@@ -8,7 +8,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from datetime import datetime
-from typing import NamedTuple
 from os import path as Path
 from os import system, getenv
 from pathlib import PurePath
@@ -77,13 +76,14 @@ signal(SIGQUIT, handleInterrupt)
 
 def scrapeReposts(url: str):
     global page_source, driver
+    fireFoxOptions = webdriver.FirefoxOptions()
+    fireFoxOptions.add_argument("-profile")
+    profile=getenv("FF_PROFILE")
+    fireFoxOptions.add_argument(profile)    
     # uncomment for headless
-    # fireFoxOptions = webdriver.FirefoxOptions()
     # fireFoxOptions.add_argument("-headless")
-    # driver = webdriver.Firefox(options=fireFoxOptions)
 
-    # uncomment for not headless
-    driver = webdriver.Firefox()
+    driver = webdriver.Firefox(options=fireFoxOptions)
 
     driver.get(url)    
     print("loaded page")
