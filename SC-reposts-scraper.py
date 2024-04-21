@@ -1,6 +1,7 @@
 # SoundCloud reposts webscraper for Sour_Cream_Pringles@soundcloud.com
-from selenium import webdriver
-from selenium.webdriver import Firefox
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver import Firefox, Chrome
+from selenium.webdriver import FirefoxOptions, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -28,7 +29,7 @@ load_dotenv(dotenv_path=find_dotenv(),  # Or BASE_DIR/'.env',
 # This ensures that you access the latest values from the .env file every time you run the script
 
 # Globals
-driver: Firefox
+driver: WebDriver
 page_source: str
 continue_scrolling = True
 scrolling_started = False
@@ -76,14 +77,20 @@ signal(SIGQUIT, handleInterrupt)
 
 def scrapeReposts(url: str):
     global page_source, driver
-    fireFoxOptions = webdriver.FirefoxOptions()
-    fireFoxOptions.add_argument("-profile")
-    profile=getenv("FF_PROFILE")
-    fireFoxOptions.add_argument(profile)    
-    # uncomment for headless
-    # fireFoxOptions.add_argument("-headless")
 
-    driver = webdriver.Firefox(options=fireFoxOptions)
+    if use_chrome:
+        chromeOptions = ChromeOptions()
+        if headless:
+            chromeOptions.add_argument("--headless")
+        driver = Chrome(chrome_options=chromeOptions)
+    else:
+        fireFoxOptions = FirefoxOptions()
+        fireFoxOptions.add_argument("-profile")
+        profile=getenv("FF_PROFILE")
+        fireFoxOptions.add_argument(profile)
+        if headless:
+            fireFoxOptions.add_argument("-headless")
+        driver = Firefox(options=fireFoxOptions)
 
     driver.get(url)    
     print("loaded page")
@@ -100,7 +107,7 @@ def scrapeReposts(url: str):
         driver.close()
         driver.quit()
 
-def scrollReposts(driver: webdriver):
+def scrollReposts(driver: WebDriver):
     global continue_scrolling, scrolling_started
     scrolling_started = True
     print("Scrolling started")
@@ -245,12 +252,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("SC-reposts-scraper", argument_default=argparse.SUPPRESS)
     parser.add_argument("saved_page_path",
                         metavar="path/to/reposts.html",
-                        nargs='?',                        
+                        nargs='?',
                         help="path to html file of saved reposts webpage to parse")
     parser.add_argument("--scroll-limit",
                         nargs='?',
                         help="limit for number of times webdriver scrolls with pageDown",
                         type=int)
+    parser.add_argument("--chrome",
+                        help="run with Chrome (default Firefox)",
+                        action='store_true')
+    parser.add_argument("--headless",
+                        help="run webdriver in headless mode",
+                        action='store_true')
     args = parser.parse_args()
 
     pathToHtml = ''
@@ -259,6 +272,12 @@ if __name__ == "__main__":
     scrollLimit = 0
     if hasattr(args, "scroll_limit"):
         scrollLimit = args.scroll_limit
+    use_chrome = False
+    if hasattr(args, "chrome"):
+        use_chrome =  args.chrome
+    headless = False
+    if hasattr(args, "headless"):
+        headless = args.headless
     
     if pathToHtml != '':
         try:

@@ -19,9 +19,13 @@
             "program": "SC-reposts-scraper.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": [// "path/to/html",
+            "args": [
+                    // "path/to/html",
                      "--scroll-limit",
-                     "4000"]
+                     "4000",
+                    "--chrome",
+                    "--headless"
+                    ]
         }
     ]
 }
