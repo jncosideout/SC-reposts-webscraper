@@ -95,6 +95,32 @@ def scrapeReposts(url: str):
     driver.get(url)    
     print("loaded page")
 
+    cookies_banner_xpath = '//*[@id="onetrust-reject-all-handler"]'
+    try:
+        pause = 5.0
+        reject_cookies_button = WebDriverWait(driver, timeout=pause).until(
+            EC.visibility_of_element_located(
+                (By.XPATH, cookies_banner_xpath)
+            )
+        )
+    except TimeoutException:
+        pass
+    else:
+        # click Reject All cookies button
+        try:
+            click_reject_chain = ActionChains(driver)
+            click_reject_chain.click(reject_cookies_button)
+            sleep(2.5)
+            click_reject_chain.perform()
+            print("Clicked Reject All button on cookies banner")
+        except Exception as ex:
+            print("~~~~~~~~~~~~~~~~~~~")
+            traceback.print_tb(ex.__traceback__)
+            print("~~~~~~~~~~~~~~~~~~~")
+            print("Error when clicking Reject All button on cookies banner")
+            pass
+
+
     try:
         # pause to avoid bot detection
         pause = 3.0
