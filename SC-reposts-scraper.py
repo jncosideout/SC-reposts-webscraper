@@ -110,9 +110,9 @@ def scrapeReposts(url: str):
         try:
             click_reject_chain = ActionChains(driver)
             click_reject_chain.click(reject_cookies_button)
-            sleep(2.5)
             click_reject_chain.perform()
             print("Clicked Reject All button on cookies banner")
+            sleep(2.5) # to make it more realistic
         except Exception as ex:
             print("~~~~~~~~~~~~~~~~~~~")
             traceback.print_tb(ex.__traceback__)
@@ -226,6 +226,7 @@ def save(text, dir):
     return(file_path)
     
 def parse_html():
+    print("parsing html into soup")
     return BeautifulSoup(page_source, 'html.parser')
 
 def transform(soup: BeautifulSoup):
@@ -323,10 +324,12 @@ if __name__ == "__main__":
     if songs_array is not None:
         try:
             for song in songs_array:
-                songList = songList + song + '\n'
-            with open('reposts-1.txt', 'w') as fh:
-                fh.write(songList)
-            print("wrote songs to reposts-1.txt")
+                if not song.endswith("https://soundcloud.com"):
+                    songList = songList + song + '\n'
+            if songList != '':
+                with open('reposts-1.txt', 'w') as fh:
+                    fh.write(songList)
+                print("wrote songs to reposts-1.txt")
         except Exception as ex:
             print('Error writing songs to file {}'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -334,10 +337,17 @@ if __name__ == "__main__":
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             if pathToHtml == '':
                 save(page_source, '.')
+            else:
+                pathToHtmlBackup = pathToHtml + 'bak'
+                save(pathToHtmlBackup, '.')
+                
     else:
         print("Sorry, could not extract data")
         if pathToHtml == '':
             save(page_source, '.')
+        else:
+            pathToHtmlBackup = pathToHtml + 'bak'
+            save(pathToHtmlBackup, '.')
 
     endTime = datetime.now()
     execution = endTime - startTime
