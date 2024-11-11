@@ -38,8 +38,8 @@ def handleInterrupt(signal, frame):
     '''Intended to stop scrolling the page early so page_source can be captured
     and processed when the user sends a keyboard interrupt Ctrl+C for SIGINT or Ctrl+\ for SIGQUIT
 
-    WARNING: Sending SIGINT to the parent process (e.g. shell when invoking SC-reposts-scraper.py
-    or when running this script in a vscode debug session) will also kill the webdriver marionette process
+    WARNING: Sending SIGINT to the parent process (e.g. shell when invoking SC-reposts-scraper.py,
+    or the executable 'code' when running this script in a vscode debug session) will also kill the webdriver marionette process
     causing the webdriver to throw several errors, such as urllib3.exceptions.MaxRetryError
     or selenium-specific errors when accessing webdriver properties
 
