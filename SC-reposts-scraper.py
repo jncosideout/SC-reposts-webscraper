@@ -80,9 +80,13 @@ def scrapeReposts(url: str):
 
     if use_chrome:
         chromeOptions = ChromeOptions()
+        # potential workaround for SessionNotCreatedException: ... DevToolsActivePort file doesn't exist (CONSIDERED UNSECURE)
+        #chromeOptions.add_argument("--no-sandbox") 
+        # current workaround for SessionNotCreatedException: ... DevToolsActivePort file doesn't exist
+        chromeOptions.add_argument("--remote-debugging-pipe")
         if headless:
             chromeOptions.add_argument("--headless")
-        driver = Chrome(chrome_options=chromeOptions)
+        driver = Chrome(options=chromeOptions)
     else:
         fireFoxOptions = FirefoxOptions()
         fireFoxOptions.add_argument("-profile")
