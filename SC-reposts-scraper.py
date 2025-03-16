@@ -145,8 +145,13 @@ def scrollReposts(driver: WebDriver):
     scrollCount = 0
     # delimiter of reposts page, signals bottom of reposts list
     # <div class="paging-eof sc-border-light-top" title=""></div>
-    css_selector_name = "paging-eof"
-    css_selector = "." + css_selector_name
+    eof_css_selector_name = "paging-eof"
+    eof_css_selector = "." + eof_css_selector_name
+    loading_spinner_selector_class1 = "loading"
+    loading_spinner_selector_class2 = "regular"
+    loading_spinner_selector_class3 = "m-padded"
+    loading_spinner_selector = "." + loading_spinner_selector_class1
+    loading_spinner_xpath = f"//div[contains(@class, '{loading_spinner_selector_class1}') and contains(@class, '{loading_spinner_selector_class2}') and contains(@class, '{loading_spinner_selector_class3}')]"
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
@@ -155,15 +160,17 @@ def scrollReposts(driver: WebDriver):
         scrollCount += 1
         # Progress display of scrolling, with message that updates on one line
         # (rather than printing newlines, it writes over the last line of output using '\r' carriage return)
-        print(f"scrolled {scrollCount} times", end='\r')
+        # print(f"scrolled {scrollCount} times", end='\r') # comment out when debugging, since this clobbers other stdout messages
+
+        # randomize the wait time to avoid bot detection
+        pause = uniform(0.25, 1.0)
+        # sleep(pause) # debug comment out when testing new "wait for spinner" logic
 
         actions = ActionChains(driver)
         actions.send_keys(Keys.END)
         actions.perform()
-        # randomize the wait time to avoid bot detection
-        pause = uniform(1, 4.0)
-        try:
-            try:
+        try: # wrap all selenium calls that can throw in an outer try block
+            try: # check for bot detection
                 captcha_url='geo.captcha-delivery.com'
                 xpath_to_captcha=f"//iframe[contains(@src, '{captcha_url}')]"
                 # (X path) ^^ to iframe for captcha_url 
@@ -174,7 +181,7 @@ def scrollReposts(driver: WebDriver):
                 # keep scrolling, have not been detected yet
                 pass
             else:
-                isFound = captcha_url in bot_dectection_iframe.get_attribute("src")
+                isFound = captcha_url in bot_dectection_iframe.get_attribute("src") and bot_dectection_iframe.is_displayed
                 if isFound:
                     AUDIO_ALERT = getenv('AUDIO_ALERT')
                     if AUDIO_ALERT != '' and Path.isfile(AUDIO_ALERT):
@@ -190,21 +197,62 @@ def scrollReposts(driver: WebDriver):
                     print('User did not beat captcha, quit scrolling, process the page early')
                     break
 
+            # don't scroll until the loading spinner disappears, signaling more list items have loaded on the page
+            SHORT_TIMEOUT  = 0.5   # give enough time for the loading element to appear
+            LONG_TIMEOUT = 2.5  # give enough time for loading element to disappear
             try:
-                # keep scrolling until the EOF element is found, signaling the end of the page has been reached
-                eof_element = WebDriverWait(driver, timeout=pause).until(
+                spinner_startTime = datetime.now()
+
+                # # first, check for the spinner
+                # # - required to prevent prematurely checking if element
+                # #   has disappeared, before it has had a chance to appear
+                loading_spinner_elem = WebDriverWait(driver, timeout=SHORT_TIMEOUT, poll_frequency=0.05).until(
                     EC.visibility_of_element_located(
-                        (By.CSS_SELECTOR, css_selector)
+                        (By.XPATH, loading_spinner_xpath)
+                    )
+                )
+                foundSpinner_time = datetime.now() - spinner_startTime
+
+                if loading_spinner_elem.is_displayed:
+                    print(f"found spinner after {foundSpinner_time}")
+                    # then wait for the element to disappear
+                    loading_spinner_elem = WebDriverWait(driver, timeout=LONG_TIMEOUT, poll_frequency=0.02).until_not(
+                        EC.visibility_of_element_located(
+                            (By.XPATH, loading_spinner_xpath)
+                        )
+                    )
+                
+                print("finished waiting for spinner to disappear")
+            except Exception as ex: # Catch all exceptions for debugging, but this should just be TimeoutException
+                print('Encountered exception type ({}) while waiting for spinner'.format(type(ex)))
+                # loading spinner is probably gone, look for eof, then keep scrolling, 
+                pass
+            else:
+                isFound = loading_spinner_elem.is_displayed
+                if isFound:
+                    print("spinner has not disappeared after timeout, page is likely frozen and won't continue to load")
+                    # stop scrolling and save the page
+                    continue_scrolling = False
+                    continue
+
+            spinner_endTime = datetime.now()
+            spinner_execution = spinner_endTime - spinner_startTime
+            print(f"spinner wait time was {spinner_execution}\n")
+        
+            try: # keep scrolling until the EOF element is found, signaling the end of the page has been reached
+                eof_element = WebDriverWait(driver, timeout=0.5, poll_frequency=0.1).until(
+                    EC.visibility_of_element_located(
+                        (By.CSS_SELECTOR, eof_css_selector)
                     )
                 )
             except TimeoutException:
                 # a Timeout means we haven't reached the EOF element yet
                 continue
             else:
-                isFound = css_selector_name in eof_element.get_attribute("class")
+                isFound = eof_css_selector_name in eof_element.get_attribute("class") and eof_element.is_displayed
                 continue_scrolling = not isFound
                 if isFound:
-                    print(f"\nFinished scrolling to {css_selector_name}")
+                    print(f"\nFinished scrolling to {eof_css_selector_name}")
         except Exception as ex:
             print('\nEncountered exception type ({}) while scrolling'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -216,6 +264,7 @@ def scrollReposts(driver: WebDriver):
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"\nscrolling execution time was {execution}")
+    print(f"scrolled {scrollCount} times")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
