@@ -99,10 +99,10 @@ def scrapeReposts(url: str):
     driver.get(url)    
     print("loaded page")
 
+    LONG_TIMEOUT = 3.5
     cookies_banner_xpath = '//*[@id="onetrust-reject-all-handler"]'
     try:
-        pause = 5.0
-        reject_cookies_button = WebDriverWait(driver, timeout=pause).until(
+        reject_cookies_button = WebDriverWait(driver, timeout=LONG_TIMEOUT, poll_frequency=0.2).until(
             EC.visibility_of_element_located(
                 (By.XPATH, cookies_banner_xpath)
             )
@@ -126,10 +126,31 @@ def scrapeReposts(url: str):
 
 
     try:
-        # pause to avoid bot detection
-        pause = 3.0
-        sleep(pause)
+        # grab first song album art for starting reference point to scroll on page
+        first_art = WebDriverWait(driver, timeout=LONG_TIMEOUT, poll_frequency=0.2).until(
+                        EC.visibility_of_element_located(
+                            (By.CLASS_NAME, "sound__artwork")            
+                        )
+                    )
+        art_size = first_art.rect
+
+        # https://stackoverflow.com/questions/44777053/selenium-movetargetoutofboundsexception-with-firefox
+        # Browsers other than Firefox treat Webdrivers move_to_element action as scroll to part
+        # of page with element, then hover over it. Firefox seems to have taken a hardline stance
+        # that move_to_element is just "hover over" and we are waiting for a scroll action to fix this.
+        # For now you have to workaround this bug using javascript
+        driver.execute_script("arguments[0].scrollIntoView();", first_art)
+
+        actions = ActionChains(driver)
+        actions.move_to_element_with_offset(first_art,
+                                            art_size["width"] + 1,
+                                             art_size["height"] + 1)
+        actions.send_keys(Keys.PAGE_DOWN)
+        actions.perform()
+        print("got first art cover and did first pagedown")
         scrollReposts(driver)
+    except TimeoutException:
+        pass
     finally:
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
@@ -148,7 +169,6 @@ def scrollReposts(driver: WebDriver):
     eof_css_selector_name = "paging-eof"
     eof_css_selector = "." + eof_css_selector_name
     SHORT_TIMEOUT  = 0.3
-    LONG_TIMEOUT = 2.5
     # variables for checking whether song list loading has stalled
     base_pause = 0
     songs_list_total = 0
@@ -156,7 +176,6 @@ def scrollReposts(driver: WebDriver):
     song_count_checkpoints = {1, 5, 10}
     checkpoint_retries = 0
     maximum_checkpoint_retries = 3
-
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
