@@ -149,8 +149,14 @@ def scrollReposts(driver: WebDriver):
     eof_css_selector = "." + eof_css_selector_name
     SHORT_TIMEOUT  = 0.3
     LONG_TIMEOUT = 2.5
+    # variables for checking whether song list loading has stalled
+    base_pause = 0
     songs_list_total = 0
     all_song_items_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]/li[@class='soundList__item']"
+    song_count_checkpoints = {1, 5, 10}
+    checkpoint_retries = 0
+    maximum_checkpoint_retries = 3
+
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
@@ -162,7 +168,7 @@ def scrollReposts(driver: WebDriver):
         print(f"scrolled {scrollCount} times", end='\r') # comment out when debugging, since this clobbers other stdout messages
 
         # randomize the wait time to avoid bot detection
-        pause = uniform(0.25, 1.0)
+        pause = uniform(0.25, 1.0) + base_pause
         sleep(pause)
 
         actions = ActionChains(driver)
@@ -206,19 +212,31 @@ def scrollReposts(driver: WebDriver):
             # # and check if it has not increased before we reach the end of the page, since that could mean
             # # the server has timed out or another error has occurred that caused the lazy loading list to
             # # stop loading songs. 
-            try:
-                songs_list=driver.find_elements(By.XPATH, all_song_items_xpath)
-                songs_list_new_count=len(songs_list)
-                if not songs_list_total < songs_list_new_count:
-                    print("count of songs in list has not changed since last check, page is likely frozen and won't continue to load")
-                    # stop scrolling and save the page
-                    continue_scrolling = False
-                    continue
-                else:
-                    songs_list_total=songs_list_new_count 
-            except Exception as ex:                
-                print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
-                raise ex
+            if scrollCount in song_count_checkpoints:
+                try:
+                    songs_list=driver.find_elements(By.XPATH, all_song_items_xpath)
+                    songs_list_new_count=len(songs_list)
+                    if not songs_list_total < songs_list_new_count:
+                        print("count of songs in list has not changed since last check")
+                        if checkpoint_retries > maximum_checkpoint_retries:
+                            print("page is likely frozen and won't continue to load")
+                            # stop scrolling and save the page
+                            continue_scrolling = False
+                            continue
+                        else:
+                            checkpoint_retries += 1
+                            # add more time to the pause between scrolls to allow SoundCloud time to load
+                            base_pause += 1
+                            # force another checkpoint to occur on the next loop
+                            song_count_checkpoints.add(scrollCount + 1)
+                    else:
+                        # lazy list is performing well, update song total
+                        songs_list_total=songs_list_new_count
+                        # reset checkpoint_retries 
+                        checkpoint_retries=0
+                except Exception as ex:
+                    print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
+                    raise ex
 
 
             try: # keep scrolling until the EOF element is found, signaling the end of the page has been reached
