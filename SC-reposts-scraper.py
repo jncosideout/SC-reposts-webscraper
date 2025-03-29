@@ -150,7 +150,7 @@ def scrapeReposts(url: str):
         print("got first art cover and did first pagedown")
         scrollReposts(driver)
     except TimeoutException:
-        pass
+        scrollReposts(driver)
     finally:
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
