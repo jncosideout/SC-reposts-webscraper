@@ -170,10 +170,10 @@ def scrollReposts(driver: WebDriver):
     eof_css_selector = "." + eof_css_selector_name
     SHORT_TIMEOUT  = 0.3
     # variables for checking whether song list loading has stalled
-    base_pause = 0
+    base_pause = 0.25
     songs_list_total = 0
     all_song_items_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]/li[@class='soundList__item']"
-    song_count_checkpoints = {1, 5, 10}
+    song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000}
     checkpoint_retries = 0
     maximum_checkpoint_retries = 3
 
@@ -187,7 +187,7 @@ def scrollReposts(driver: WebDriver):
         print(f"scrolled {scrollCount} times", end='\r') # comment out when debugging, since this clobbers other stdout messages
 
         # randomize the wait time to avoid bot detection
-        pause = uniform(0.25, 1.0) + base_pause
+        pause = uniform(0.01, 1.0) + base_pause
         sleep(pause)
 
         actions = ActionChains(driver)
