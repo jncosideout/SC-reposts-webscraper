@@ -18,6 +18,7 @@ from random import uniform
 from signal import signal, SIGINT, SIGTERM, SIGQUIT
 from time import sleep
 import traceback
+from sys import stderr
 
 from dotenv import load_dotenv, find_dotenv
 # Load the .env file using find_dotenv(), which searches for the .env file starting from the current directory
@@ -33,6 +34,9 @@ driver: WebDriver
 page_source: str
 continue_scrolling = True
 scrolling_started = False
+
+def print_err(*args, **kwargs):
+    print(*args, file=stderr, **kwargs)
 
 def handleInterrupt(signal, frame):
     '''Intended to stop scrolling the page early so page_source can be captured
@@ -236,20 +240,22 @@ def scrollReposts(driver: WebDriver):
                     songs_list=driver.find_elements(By.XPATH, all_song_items_xpath)
                     songs_list_new_count=len(songs_list)
                     if not songs_list_total < songs_list_new_count:
-                        print("count of songs in list has not changed since last check")
+                        print_err("count of songs in list has not changed since last check")
                         if checkpoint_retries > maximum_checkpoint_retries:
-                            print("page is likely frozen and won't continue to load")
+                            print_err("page is likely frozen and won't continue to load")
                             # stop scrolling and save the page
                             continue_scrolling = False
                             continue
                         else:
                             checkpoint_retries += 1
+                            print_err(f"checkpoint fail with count: {songs_list_new_count}. retries: {checkpoint_retries}") 
                             # add more time to the pause between scrolls to allow SoundCloud time to load
                             base_pause += 1
                             # force another checkpoint to occur on the next loop
                             song_count_checkpoints.add(scrollCount + 1)
                     else:
                         # lazy list is performing well, update song total
+                        print_err(f"checkpoint passed with count: {songs_list_new_count}") 
                         songs_list_total=songs_list_new_count
                         # reset checkpoint_retries 
                         checkpoint_retries=0
