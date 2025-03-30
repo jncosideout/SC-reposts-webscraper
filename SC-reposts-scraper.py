@@ -177,9 +177,9 @@ def scrollReposts(driver: WebDriver):
     base_pause = 0.25
     songs_list_total = 0
     all_song_items_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]/li[@class='soundList__item']"
-    song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000}
+    song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000, 2350, 2600, 3000, 3600, 4500}
     checkpoint_retries = 0
-    maximum_checkpoint_retries = 3
+    maximum_checkpoint_retries = 10
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
@@ -250,12 +250,12 @@ def scrollReposts(driver: WebDriver):
                             checkpoint_retries += 1
                             print_err(f"checkpoint fail with count: {songs_list_new_count}. retries: {checkpoint_retries}") 
                             # add more time to the pause between scrolls to allow SoundCloud time to load
-                            base_pause += 1
-                            # force another checkpoint to occur on the next loop
-                            song_count_checkpoints.add(scrollCount + 1)
+                            base_pause += 1.0
+                            # force another checkpoint to occur on an upcoming loop relatively soon
+                            song_count_checkpoints.add(scrollCount + 5)
                     else:
                         # lazy list is performing well, update song total
-                        print_err(f"checkpoint passed with count: {songs_list_new_count}") 
+                        print_err(f"checkpoint passed with count: {songs_list_new_count} and scrollCount {scrollCount}") 
                         songs_list_total=songs_list_new_count
                         # reset checkpoint_retries 
                         checkpoint_retries=0
