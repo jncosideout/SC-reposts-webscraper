@@ -254,7 +254,7 @@ def scrollReposts(driver: WebDriver):
                             checkpoint_retries += 1
                             print_err(f"checkpoint fail with count: {songs_list_new_count} at scrollCount {scrollCount}. Retries: {checkpoint_retries}") 
                             # add more time to the pause between scrolls to allow SoundCloud time to load
-                            base_pause += 1.0
+                            base_pause += 1.25
                             # force another checkpoint to occur on an upcoming loop relatively soon
                             song_count_checkpoints.add(scrollCount + 5)
                     else:
@@ -264,6 +264,10 @@ def scrollReposts(driver: WebDriver):
                         songs_list_total=songs_list_new_count
                         # reset checkpoint_retries 
                         checkpoint_retries=0
+                        # increase pause between scroll cycles. Even though the list loading hasn't frozen yet,
+                        # over time the page load times always increase and memory usage grows, so the time buffer
+                        # should increase gradually no matter what. It increases more in a failure case, however (See above)
+                        base_pause += 0.5
                 except Exception as ex:
                     print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
                     raise ex
