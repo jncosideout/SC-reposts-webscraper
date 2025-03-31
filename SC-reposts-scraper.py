@@ -94,7 +94,7 @@ def scrapeReposts(url: str):
     else:
         fireFoxOptions = FirefoxOptions()
         fireFoxOptions.add_argument("-profile")
-        profile=getenv("FF_PROFILE")
+        profile=getenv("FF_PROFILE") # path to custom firefox profile dir. Custom profiles can increase memory limits
         fireFoxOptions.add_argument(profile)
         if headless:
             fireFoxOptions.add_argument("-headless")
@@ -103,6 +103,7 @@ def scrapeReposts(url: str):
     driver.get(url)    
     print("loaded page")
 
+    global LONG_TIMEOUT
     LONG_TIMEOUT = 3.5
     cookies_banner_xpath = '//*[@id="onetrust-reject-all-handler"]'
     try:
@@ -237,6 +238,9 @@ def scrollReposts(driver: WebDriver):
             # # stop loading songs. 
             if scrollCount in song_count_checkpoints:
                 try:
+                    # pause before counting all song elements. 
+                    # There is a chance the page will freeze as the page load times progress
+                    sleep(LONG_TIMEOUT)
                     songs_list=driver.find_elements(By.XPATH, all_song_items_xpath)
                     songs_list_new_count=len(songs_list)
                     if not songs_list_total < songs_list_new_count:
@@ -248,14 +252,15 @@ def scrollReposts(driver: WebDriver):
                             continue
                         else:
                             checkpoint_retries += 1
-                            print_err(f"checkpoint fail with count: {songs_list_new_count}. retries: {checkpoint_retries}") 
+                            print_err(f"checkpoint fail with count: {songs_list_new_count} at scrollCount {scrollCount}. Retries: {checkpoint_retries}") 
                             # add more time to the pause between scrolls to allow SoundCloud time to load
                             base_pause += 1.0
                             # force another checkpoint to occur on an upcoming loop relatively soon
                             song_count_checkpoints.add(scrollCount + 5)
                     else:
                         # lazy list is performing well, update song total
-                        print_err(f"checkpoint passed with count: {songs_list_new_count} and scrollCount {scrollCount}") 
+                        print_err(f"checkpoint passed with song_count: {songs_list_new_count} at scrollCount {scrollCount}") 
+                        # update song total
                         songs_list_total=songs_list_new_count
                         # reset checkpoint_retries 
                         checkpoint_retries=0
