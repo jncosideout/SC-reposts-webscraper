@@ -24,7 +24,7 @@
                      "--scroll-limit",
                      "4000",
                     "--chrome",
-                    "--headless"
+                    // "--headless"
                     ]
         }
     ]

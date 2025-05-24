@@ -99,7 +99,6 @@ def scrapeReposts(url: str):
         if headless:
             fireFoxOptions.add_argument("-headless")
         driver = Firefox(options=fireFoxOptions)
-
     driver.get(url)    
     print("loaded page")
 
@@ -177,7 +176,7 @@ def scrollReposts(driver: WebDriver):
     # variables for checking whether song list loading has stalled
     base_pause = 0.25
     songs_list_total = 0
-    all_song_items_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]/li[@class='soundList__item']"
+    ul_song_list_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]"
     song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000, 2350, 2600, 3000, 3600, 4500}
     checkpoint_retries = 0
     maximum_checkpoint_retries = 10
@@ -232,8 +231,8 @@ def scrollReposts(driver: WebDriver):
 
             # # Previous strategy to wait for the loading spinner to appear and disappear 
             # # is invalid because the loading spinner never disappears (see 4c1be3d)
-            # # So instead we'll count the number of songs in the lazy loading list after each scroll down
-            # # and check if it has not increased before we reach the end of the page, since that could mean
+            # # So instead we'll count the number of songs in the lazy loading list after certain scroll checkpoints
+            # # to see if it has not increased before we reach the end of the page, since that could mean
             # # the server has timed out or another error has occurred that caused the lazy loading list to
             # # stop loading songs. 
             if scrollCount in song_count_checkpoints:
@@ -241,8 +240,8 @@ def scrollReposts(driver: WebDriver):
                     # pause before counting all song elements. 
                     # There is a chance the page will freeze as the page load times progress
                     sleep(LONG_TIMEOUT)
-                    songs_list=driver.find_elements(By.XPATH, all_song_items_xpath)
-                    songs_list_new_count=len(songs_list)
+                    songs_list=driver.find_element(By.XPATH, ul_song_list_xpath)
+                    songs_list_new_count=int(songs_list.get_attribute("childElementCount"))
                     if not songs_list_total < songs_list_new_count:
                         print_err("count of songs in list has not changed since last check")
                         if checkpoint_retries > maximum_checkpoint_retries:
