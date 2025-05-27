@@ -180,6 +180,7 @@ def scrollReposts(driver: WebDriver):
     song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000, 2350, 2600, 3000, 3600, 4500}
     checkpoint_retries = 0
     maximum_checkpoint_retries = 10
+    scroll_key=Keys.PAGE_DOWN # Keys.END
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
@@ -195,7 +196,7 @@ def scrollReposts(driver: WebDriver):
         sleep(pause)
 
         actions = ActionChains(driver)
-        actions.send_keys(Keys.END)
+        actions.send_keys(scroll_key)
         actions.perform()
         try: # wrap all selenium calls that can throw in an outer try block
             try: # check for bot detection
