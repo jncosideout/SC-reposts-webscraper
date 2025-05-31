@@ -174,10 +174,10 @@ def scrollReposts(driver: WebDriver):
     eof_css_selector = "." + eof_css_selector_name
     SHORT_TIMEOUT  = 0.3
     # variables for checking whether song list loading has stalled
-    base_pause = 0.25
+    base_pause = 1.0
     songs_list_total = 0
     ul_song_list_xpath = f"//div[contains(@class,'userReposts')]/ul[contains(@class, 'soundList')]"
-    song_count_checkpoints = {10, 50, 300, 1000, 1500, 2000, 2350, 2600, 3000, 3600, 4500}
+    song_count_checkpoints = {10}
     checkpoint_retries = 0
     maximum_checkpoint_retries = 10
     scroll_key=Keys.PAGE_DOWN # Keys.END
@@ -254,7 +254,7 @@ def scrollReposts(driver: WebDriver):
                             checkpoint_retries += 1
                             print_err(f"checkpoint fail with count: {songs_list_new_count} at scrollCount {scrollCount}. Retries: {checkpoint_retries}") 
                             # add more time to the pause between scrolls to allow SoundCloud time to load
-                            base_pause += 1.25
+                            base_pause += LONG_TIMEOUT
                             # force another checkpoint to occur on an upcoming loop relatively soon
                             song_count_checkpoints.add(scrollCount + 5)
                     else:
@@ -267,7 +267,40 @@ def scrollReposts(driver: WebDriver):
                         # increase pause between scroll cycles. Even though the list loading hasn't frozen yet,
                         # over time the page load times always increase and memory usage grows, so the time buffer
                         # should increase gradually no matter what. It increases more in a failure case, however (See above)
-                        base_pause += 0.5
+                        base_pause += SHORT_TIMEOUT
+                        # force another checkpoint to occur on an upcoming loop in the future
+                        newCheckpointInterval=10
+                        if scrollCount >= 100:
+                            newCheckpointInterval=20
+                        if scrollCount >= 500:
+                            newCheckpointInterval=50
+                        if scrollCount >= 1000:
+                            newCheckpointInterval=100
+                            base_pause += SHORT_TIMEOUT
+                        if scrollCount >= 1500:
+                            newCheckpointInterval=150
+                            base_pause += SHORT_TIMEOUT
+                        if scrollCount >= 2000:
+                            newCheckpointInterval=200
+                            base_pause += SHORT_TIMEOUT
+                        if scrollCount >= 3000:
+                            newCheckpointInterval=250
+                            base_pause += SHORT_TIMEOUT
+                        if scrollCount >= 4000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 5000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 6000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 7000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 8000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 9000:
+                            base_pause += SHORT_TIMEOUT/2
+                        if scrollCount >= 10000:
+                            base_pause += SHORT_TIMEOUT/2
+                        song_count_checkpoints.add(scrollCount + newCheckpointInterval)
                 except Exception as ex:
                     print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
                     raise ex
