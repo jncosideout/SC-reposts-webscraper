@@ -152,9 +152,16 @@ def scrapeReposts(url: str):
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
         print("got first art cover and did first pagedown")
+    except Exception as ex:
+        print('Encountered exception type ({}) while trying to grab first song album art')
+     
+    try:
         scrollReposts(driver)
-    except TimeoutException:
-        scrollReposts(driver)
+    except Exception as ex:
+        print('Encountered exception type ({}) in scrollReposts'.format(type(ex)))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        traceback.print_tb(ex.__traceback__)
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     finally:
         # # Make a copy of relevant data, because Selenium will throw if
         # # you try to access the properties after the driver quit
@@ -331,7 +338,7 @@ def scrollReposts(driver: WebDriver):
     endTime = datetime.now()
     execution = endTime - startTime
     print(f"\nscrolling execution time was {execution}")
-    print(f"scrolled {scrollCount} times")
+    print(f"scrolled {scrollCount} times with song count {songs_list_total}")
 
 def save(text, dir):
     file_name = PurePath(url).name + '.html'
