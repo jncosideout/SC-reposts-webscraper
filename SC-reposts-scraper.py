@@ -1,5 +1,6 @@
 # SoundCloud reposts webscraper for Sour_Cream_Pringles@soundcloud.com
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import Firefox, Chrome
 from selenium.webdriver import FirefoxOptions, ChromeOptions
 from selenium.webdriver.common.by import By
@@ -34,6 +35,7 @@ driver: WebDriver
 page_source: str
 continue_scrolling = True
 scrolling_started = False
+checkpoint_songs_list: WebElement
 
 def print_err(*args, **kwargs):
     print(*args, file=stderr, **kwargs)
@@ -163,14 +165,23 @@ def scrapeReposts(url: str):
         traceback.print_tb(ex.__traceback__)
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     finally:
-        # # Make a copy of relevant data, because Selenium will throw if
-        # # you try to access the properties after the driver quit
-        page_source = driver.page_source
-        driver.close()
-        driver.quit()
+        try:
+            # # Make a copy of relevant data, because Selenium will throw if
+            # # you try to access the properties after the driver quit
+            page_source = driver.page_source
+            driver.close()
+            driver.quit()
+        except Exception as ex:
+            print('Encountered exception type ({}) in scrollReposts'.format(type(ex)))
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            traceback.print_tb(ex.__traceback__)
+            print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+        finally:
+            # try to save songs from last checkpoint
+            page_source = checkpoint_songs_list.text
 
 def scrollReposts(driver: WebDriver):
-    global continue_scrolling, scrolling_started
+    global continue_scrolling, scrolling_started, checkpoint_songs_list
     scrolling_started = True
     print("Scrolling started")
     startTime = datetime.now()
@@ -248,8 +259,8 @@ def scrollReposts(driver: WebDriver):
                     # pause before counting all song elements. 
                     # There is a chance the page will freeze as the page load times progress
                     sleep(LONG_TIMEOUT)
-                    songs_list=driver.find_element(By.XPATH, ul_song_list_xpath)
-                    songs_list_new_count=int(songs_list.get_attribute("childElementCount"))
+                    checkpoint_songs_list=driver.find_element(By.XPATH, ul_song_list_xpath)
+                    songs_list_new_count=int(checkpoint_songs_list.get_attribute("childElementCount"))
                     if not songs_list_total < songs_list_new_count:
                         print_err("count of songs in list has not changed since last check")
                         if checkpoint_retries > maximum_checkpoint_retries:
@@ -361,9 +372,11 @@ def transform(soup: BeautifulSoup):
     songs = []
     if soup is None:
         return
-    div_repost_lazyList = soup.find("div", class_="userReposts lazyLoadingList")
     try:
-        ul_repost_list = div_repost_lazyList.contents[0]
+        # if soup comes from whole page_source or checkpoint_songs_list
+        ul_repost_list = soup.find("ul", class_="soundList sc-list-nostyle")
+        if ul_repost_list is None:
+            return
     except Exception as ex:
         print('Encountered exception type ({}) while transforming soup'.format(type(ex)))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
