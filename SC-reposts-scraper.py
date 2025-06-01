@@ -12,7 +12,6 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from datetime import datetime
 from os import path as Path
 from os import system, getenv
-from pathlib import PurePath
 from bs4 import BeautifulSoup
 import argparse
 from random import uniform
@@ -319,6 +318,9 @@ def scrollReposts(driver: WebDriver):
                         if scrollCount >= 10000:
                             base_pause += SHORT_TIMEOUT/2
                         song_count_checkpoints.add(scrollCount + newCheckpointInterval)
+
+                        if scrollCount % 1000 == 0:
+                            save("checkpoint_reposts.html", ".")
                 except Exception as ex:
                     print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
                     raise ex
@@ -351,8 +353,8 @@ def scrollReposts(driver: WebDriver):
     print(f"\nscrolling execution time was {execution}")
     print(f"scrolled {scrollCount} times with song count {songs_list_total}")
 
-def save(text, dir):
-    file_name = PurePath(url).name + '.html'
+def save(text, dir, filename):
+    file_name = filename + '.html'
     file_path = Path.join(dir, file_name)
         
     with open(file_path, 'w') as fh:
@@ -476,18 +478,18 @@ if __name__ == "__main__":
             traceback.print_tb(ex.__traceback__)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             if pathToHtml == '':
-                save(page_source, '.')
+                save(page_source, '.', "raw_reposts")
             else:
-                pathToHtmlBackup = pathToHtml + 'bak'
-                save(pathToHtmlBackup, '.')
+                pathToHtmlBackup = pathToHtml + '_bak'
+                save(page_source, '.', pathToHtmlBackup)
                 
     else:
         print("Sorry, could not extract data")
         if pathToHtml == '':
-            save(page_source, '.')
+            save(page_source, '.', "raw_reposts")
         else:
-            pathToHtmlBackup = pathToHtml + 'bak'
-            save(pathToHtmlBackup, '.')
+            pathToHtmlBackup = pathToHtml + '_bak'
+            save(page_source, '.', pathToHtmlBackup)
 
     endTime = datetime.now()
     execution = endTime - startTime
