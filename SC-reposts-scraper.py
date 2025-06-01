@@ -1,6 +1,5 @@
 # SoundCloud reposts webscraper for Sour_Cream_Pringles@soundcloud.com
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver import Firefox, Chrome
 from selenium.webdriver import FirefoxOptions, ChromeOptions
 from selenium.webdriver.common.by import By
@@ -34,7 +33,6 @@ driver: WebDriver
 page_source: str
 continue_scrolling = True
 scrolling_started = False
-checkpoint_songs_list: WebElement
 
 def print_err(*args, **kwargs):
     print(*args, file=stderr, **kwargs)
@@ -152,7 +150,7 @@ def scrapeReposts(url: str):
                                              art_size["height"] + 1)
         actions.send_keys(Keys.PAGE_DOWN)
         actions.perform()
-        print("got first art cover and did first pagedown")
+        print("got first art cover and did first scroll down")
     except Exception as ex:
         print('Encountered exception type ({}) while trying to grab first song album art')
      
@@ -175,12 +173,9 @@ def scrapeReposts(url: str):
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             traceback.print_tb(ex.__traceback__)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-        finally:
-            # try to save songs from last checkpoint
-            page_source = checkpoint_songs_list.text
 
 def scrollReposts(driver: WebDriver):
-    global continue_scrolling, scrolling_started, checkpoint_songs_list
+    global continue_scrolling, scrolling_started
     scrolling_started = True
     print("Scrolling started")
     startTime = datetime.now()
