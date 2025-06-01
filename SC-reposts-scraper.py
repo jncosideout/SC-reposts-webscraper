@@ -460,14 +460,20 @@ if __name__ == "__main__":
     songList = ''
 
     if songs_array is not None:
+        repostsFileName="reposts-1"
         try:
             for song in songs_array:
                 if not song.endswith("https://soundcloud.com"):
                     songList = songList + song + '\n'
             if songList != '':
-                with open('reposts-1.txt', 'w') as fh:
+                with open(f"{repostsFileName}.txt", 'x') as fh:
                     fh.write(songList)
-                print("wrote songs to reposts-1.txt")
+                print(f"wrote songs to {repostsFileName}.txt")
+        except FileExistsError:
+            print(f"{repostsFileName}.txt already exists. Attempting to write to a new file: {repostsFileName}1.txt")
+            with open(f"{repostsFileName}1.txt", 'x') as fh:
+                fh.write(songList)
+            print(f"wrote songs to {repostsFileName}1.txt")
         except Exception as ex:
             print('Error writing songs to file {}'.format(type(ex)))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
