@@ -315,7 +315,8 @@ def scrollReposts(driver: WebDriver):
                         song_count_checkpoints.add(scrollCount + newCheckpointInterval)
 
                         if scrollCount % 1000 == 0:
-                            save("checkpoint_reposts.html", ".")
+                            text=checkpoint_songs_list.get_attribute("outerHTML")
+                            save(f"<html>{text}</html>", ".", "checkpoint_reposts")
                 except Exception as ex:
                     print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
                     raise ex
