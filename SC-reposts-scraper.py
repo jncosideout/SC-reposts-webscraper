@@ -293,13 +293,12 @@ def scrollReposts(driver: WebDriver):
                             newCheckpointInterval=100
                             base_pause += SHORT_TIMEOUT
                         if scrollCount >= 1500:
-                            newCheckpointInterval=150
-                            base_pause += SHORT_TIMEOUT
-                        if scrollCount >= 2000:
                             newCheckpointInterval=200
                             base_pause += SHORT_TIMEOUT
-                        if scrollCount >= 3000:
+                        if scrollCount >= 2000:
                             newCheckpointInterval=250
+                            base_pause += SHORT_TIMEOUT
+                        if scrollCount >= 3000:
                             base_pause += SHORT_TIMEOUT
                         if scrollCount >= 4000:
                             base_pause += SHORT_TIMEOUT/2
