@@ -152,12 +152,14 @@ def scrapeReposts(url: str):
         actions.perform()
         print("got first art cover and did first scroll down")
     except Exception as ex:
-        print('Encountered exception type ({}) while trying to grab first song album art')
+        print('\nEncountered exception type: ({}) while trying to grab first song album art')
+        print("Error message: " + str(ex))
      
     try:
         scrollReposts(driver)
     except Exception as ex:
-        print('Encountered exception type ({}) in scrollReposts'.format(type(ex)))
+        print('\nEncountered exception type: ({}) in scrollReposts'.format(type(ex)))
+        print("Error message: " + str(ex))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         traceback.print_tb(ex.__traceback__)
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -169,7 +171,8 @@ def scrapeReposts(url: str):
             driver.close()
             driver.quit()
         except Exception as ex:
-            print('Encountered exception type ({}) in scrollReposts'.format(type(ex)))
+            print('\nEncountered exception type: ({}) after scrollReposts'.format(type(ex)))
+            print("Error message: " + str(ex))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             traceback.print_tb(ex.__traceback__)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -318,7 +321,8 @@ def scrollReposts(driver: WebDriver):
                             text=checkpoint_songs_list.get_attribute("outerHTML")
                             save(f"<html>{text}</html>", ".", "checkpoint_reposts")
                 except Exception as ex:
-                    print('Encountered exception type ({}) while checking song list count'.format(type(ex)))
+                    print('\nEncountered exception type: ({}) while checking song list count'.format(type(ex)))
+                    print("Error message: " + str(ex))
                     raise ex
 
 
@@ -337,7 +341,8 @@ def scrollReposts(driver: WebDriver):
                 if isFound:
                     print(f"\nFinished scrolling to {eof_css_selector_name}")
         except Exception as ex:
-            print('\nEncountered exception type ({}) while scrolling'.format(type(ex)))
+            print('\nEncountered exception type: ({}) while scrolling'.format(type(ex)))
+            print("Error message: " + str(ex))
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
             traceback.print_tb(ex.__traceback__)
             print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
@@ -376,7 +381,8 @@ def transform(soup: BeautifulSoup):
         if ul_repost_list is None:
             return
     except Exception as ex:
-        print('Encountered exception type ({}) while transforming soup'.format(type(ex)))
+        print('\nEncountered exception type: ({}) while transforming soup'.format(type(ex)))
+        print("Error message: " + str(ex))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         traceback.print_tb(ex.__traceback__)
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
