@@ -317,14 +317,15 @@ def scrollReposts(driver: WebDriver):
                             base_pause += SHORT_TIMEOUT/2
                         song_count_checkpoints.add(scrollCount + newCheckpointInterval)
 
-                        if scrollCount % 1000 == 0:
-                            text=checkpoint_songs_list.get_attribute("outerHTML")
-                            save(f"<html>{text}</html>", ".", "checkpoint_reposts")
                 except Exception as ex:
                     print('\nEncountered exception type: ({}) while checking song list count'.format(type(ex)))
                     print("Error message: " + str(ex))
                     raise ex
 
+            # save songs at a checkpoint in case the script or browser/driver crashes
+            if scrollCount % 500 == 0:
+                text=checkpoint_songs_list.get_attribute("outerHTML")
+                save(f"<html>{text}</html>", ".", "checkpoint_reposts")
 
             try: # keep scrolling until the EOF element is found, signaling the end of the page has been reached
                 eof_element = WebDriverWait(driver, timeout=SHORT_TIMEOUT, poll_frequency=0.1).until(
