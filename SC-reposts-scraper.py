@@ -511,7 +511,7 @@ if __name__ == "__main__":
                 print(f"wrote songs to {repostsFileName}.txt")
         except FileExistsError:
             print(f"{repostsFileName}.txt already exists. Attempting to write to a new file: {repostsFileName}1.txt")
-            with open(f"{repostsFileName}1.txt", 'x') as fh:
+            with open(f"{repostsFileName}1.txt", 'w') as fh:
                 fh.write(songList)
             print(f"wrote songs to {repostsFileName}1.txt")
         except Exception as ex:
