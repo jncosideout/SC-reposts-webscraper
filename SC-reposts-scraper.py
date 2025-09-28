@@ -255,7 +255,7 @@ def scrollReposts(driver: WebDriver):
                     # keep scrolling
                     pass
                 else:
-                    if stop_song.isDisplayed:
+                    if stop_song.is_displayed:
                         # stop scrolling and save the page
                         print(f"\nFinished scrolling to {newestOldSong}")
                         continue_scrolling = False
