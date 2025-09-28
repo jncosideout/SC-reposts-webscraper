@@ -470,7 +470,7 @@ if __name__ == "__main__":
     if hasattr(args, "headless"):
         headless = args.headless
     pathToOldSongs = ''
-    if hasattr(args, "old-songs"):
+    if hasattr(args, "old_songs"):
         pathToOldSongs = args.old_songs
     
     if pathToOldSongs != '':
