@@ -398,6 +398,7 @@ def transform(soup: BeautifulSoup):
 
 
 def run():
+    global newestOldSong
     startTime = datetime.now()
     soup = parse_html()
     content = transform(soup)
@@ -435,6 +436,10 @@ if __name__ == "__main__":
     parser.add_argument("--headless",
                         help="run webdriver in headless mode",
                         action='store_true')
+    parser.add_argument("--old-songs",
+                        metavar="path/to/reposts-1.txt",
+                        nargs='?',
+                        help="File of old songs, so script stops scraping when it finds the newest song in this file")
     args = parser.parse_args()
 
     pathToHtml = ''
@@ -449,6 +454,20 @@ if __name__ == "__main__":
     headless = False
     if hasattr(args, "headless"):
         headless = args.headless
+    pathToOldSongs = ''
+    if hasattr(args, "old-songs"):
+        pathToOldSongs = args.old_songs
+    
+    if pathToOldSongs != '':
+        try:
+            print(f'getting newest song from old-songs file {pathToOldSongs}')
+            with open(pathToOldSongs, 'r') as fh:
+                newestOldSong = fh.readline().rstrip().removeprefix('https://soundcloud.com/')
+                print(f'{newestOldSong} is newestOldSong')
+        except (FileNotFoundError, OSError) as e:
+            print(f'{pathToOldSongs} could not be opened')
+            print(e)
+            newestOldSong = ''
     
     if pathToHtml != '':
         try:
