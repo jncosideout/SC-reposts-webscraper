@@ -251,7 +251,7 @@ def scrollReposts(driver: WebDriver):
                 stop_song_xpath = ul_song_list_xpath + f"/li//a[contains(@href, '{newestOldSong}')]"
                 try:
                     stop_song = driver.find_element(By.XPATH, stop_song_xpath)
-                except TimeoutException:
+                except (TimeoutException, NoSuchElementException):
                     # keep scrolling
                     pass
                 else:
