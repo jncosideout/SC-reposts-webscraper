@@ -196,6 +196,7 @@ def scrollReposts(driver: WebDriver):
     checkpoint_retries = 0
     maximum_checkpoint_retries = 10
     scroll_key=Keys.PAGE_DOWN # Keys.END
+    global newestOldSong
 
     while continue_scrolling:
         if scrollLimit > 0 and scrollCount > scrollLimit:
@@ -244,6 +245,21 @@ def scrollReposts(driver: WebDriver):
                 else:
                     print('User did not beat captcha, quit scrolling, process the page early')
                     break
+            
+            if newestOldSong != '':
+                # Check for a "stopping point song," identified by the first song retrieved on the last run
+                stop_song_xpath = ul_song_list_xpath + f"/li//a[contains(@href, '{newestOldSong}')]"
+                try:
+                    stop_song = driver.find_element(By.XPATH, stop_song_xpath)
+                except TimeoutException:
+                    # keep scrolling
+                    pass
+                else:
+                    if stop_song.isDisplayed:
+                        # stop scrolling and save the page
+                        print(f"\nFinished scrolling to {newestOldSong}")
+                        continue_scrolling = False
+                        continue
 
             # # Previous strategy to wait for the loading spinner to appear and disappear 
             # # is invalid because the loading spinner never disappears (see 4c1be3d)
@@ -398,7 +414,6 @@ def transform(soup: BeautifulSoup):
 
 
 def run():
-    global newestOldSong
     startTime = datetime.now()
     soup = parse_html()
     content = transform(soup)
