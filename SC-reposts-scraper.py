@@ -473,6 +473,7 @@ if __name__ == "__main__":
     if hasattr(args, "old_songs"):
         pathToOldSongs = args.old_songs
     
+    newestOldSong = ''
     if pathToOldSongs != '':
         try:
             print(f'getting newest song from old-songs file {pathToOldSongs}')
@@ -482,7 +483,6 @@ if __name__ == "__main__":
         except (FileNotFoundError, OSError) as e:
             print(f'{pathToOldSongs} could not be opened')
             print(e)
-            newestOldSong = ''
     
     if pathToHtml != '':
         try:
